@@ -1,0 +1,40 @@
+folders:
+  data_folder: "./data"
+  save_folder: "./data/processed"
+
+setup:
+  height_size: 360 # Height of the sections
+  width_size: 36 # Width of the sections
+  height_stride: 360
+  width_stride: 36
+  default_value: 0
+  validation_fraction: 0.2
+  split_seed: 42
+  placeholders: [-999.25, -999.0]
+  range_min: -0.2
+  range_max: 0.2
+  augmented_ratio: 0.5
+
+columns:  
+  test:
+    1: 1
+    2: 1
+    3: 1
+    4: 1
+    5: 1
+  train: 
+    1: 2
+    2: 2
+    3: 1
+    4: 1
+    5: 2
+    6: 2
+    7: 2
+    8: 2
+    9: 2
+    10: 2
+    11: 1
+    12: 1
+    13: 1
+    14: 1
+    15: 1
