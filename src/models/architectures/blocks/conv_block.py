@@ -1,4 +1,5 @@
 
+import torch
 import torch.nn as nn
 from typing import Optional
 
@@ -33,7 +34,11 @@ class ConvBlock(nn.Module):
     Returns:
         torch.Tensor: The output tensor after two convolutional operations with normalization and activation applied, and optionally dropout.
     """
-    def __init__(self, in_channels:int, out_channels:int, activation:Optional[str]='ReLU', dropout_prob:Optional[float]=None):
+    def __init__(self,
+                 in_channels:int,
+                 out_channels:int,
+                 activation:Optional[str]='ReLU',
+                 dropout_prob:Optional[float]=None):
         super(ConvBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.norm1 = nn.BatchNorm2d(out_channels)
@@ -51,7 +56,7 @@ class ConvBlock(nn.Module):
         # Optional dropout layer
         self.dropout = nn.Dropout(dropout_prob) if dropout_prob is not None else None
 
-    def forward(self, x):
+    def forward(self, x:torch.Tensor) -> torch.Tensor:
         x = self.activation(self.norm1(self.conv1(x)))
         x = self.activation(self.norm2(self.conv2(x)))
 
