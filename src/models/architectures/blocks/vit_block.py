@@ -50,11 +50,11 @@ class FeedForward(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.linear2(self.activation(self.linear1(x)))
     
-class ViTransformerBlock(nn.Module):
+class ViTLayer(nn.Module):
     """
-    A single block of a Transformer model.
+    A single layer of a Vision Transformer model.
 
-    This block consists of multi-head self-attention followed by a feed-forward network,
+    This layer consists of multi-head self-attention followed by a feed-forward network,
     with residual connections and layer normalization.
 
     Args:
@@ -94,7 +94,7 @@ class ViTransformerBlock(nn.Module):
                  ff_dim: int,
                  dropout_prob: Optional[float] = None,
                  activation: Optional[str] = 'ReLU'):
-        super(ViTransformerBlock, self).__init__()
+        super(ViTLayer, self).__init__()
         
         self.attention = MultiHeadAttention(embed_dim, num_heads, True) #nn.MultiheadAttention(embed_dim, num_heads)
         self.feed_forward = FeedForward(embed_dim, ff_dim, activation)
@@ -107,9 +107,9 @@ class ViTransformerBlock(nn.Module):
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
         # Layer normalization before attention
         x_norm = self.layer_norm1(x)
-        
+
         # Multi-head self-attention
-        attn_output, attn_weights = self.attention(x_norm, x_norm, x_norm, attn_mask=mask)
+        attn_output, attn_weights = self.attention(x_norm, x_norm, x_norm, mask)
 
         if self.dropout is not None:
             attn_output = self.dropout(attn_output)
@@ -129,6 +129,50 @@ class ViTransformerBlock(nn.Module):
         # Residual connection
         x = x + ff_output
 
+        return x, attn_weights
+
+class ViTEncoderBlock(nn.Module):
+    """
+    A block of Transformer layers.
+
+    This block consists of multiple ViTLayer stacked together.
+
+    Args:
+        embed_dim (int): The dimension of the input embeddings.
+        num_heads (int): The number of attention heads.
+        ff_dim (int): The dimension of the feed-forward network.
+        num_layers (int): The number of ViTLayer to stack.
+        dropout_prob (float, optional): Probability of dropout. Default is None (no Dropout).
+        activation (str, optional): The activation function to use in the feed-forward. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
+
+    Attributes:
+        layers (List[ViTLayer]): The list of ViTLayer instances.
+
+    Forward pass:
+        The input tensor "x" is passed through each ViTLayer in sequence.
+
+    Returns:
+        torch.Tensor: Output tensor of shape (B, N, embed_dim).
+        torch.Tensor: Attention weights from the last layer.
+    """
+
+    def __init__(self,
+                 embed_dim: int,
+                 num_heads: int,
+                 ff_dim: int,
+                 num_layers: int,
+                 dropout_prob: Optional[float] = None,
+                 activation: Optional[str] = 'ReLU'):
+        super(ViTEncoderBlock, self).__init__()
+        self.layers = nn.ModuleList([
+            ViTLayer(embed_dim, num_heads, ff_dim, dropout_prob, activation)
+            for _ in range(num_layers)
+        ])
+
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        attn_weights = None
+        for layer in self.layers:
+            x, attn_weights = layer(x, mask)
         return x, attn_weights
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
