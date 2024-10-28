@@ -112,15 +112,15 @@ class PositionalEmbedding(nn.Module):
 
     def __init__(self, num_patches: int, embed_dim: int):
         super(PositionalEmbedding, self).__init__()
-        self.position_embeddings = nn.Parameter(torch.empty(1, num_patches, embed_dim))
+        self.position_embeddings = nn.Parameter(torch.empty(1, num_patches, embed_dim), requires_grad=True)
         nn.init.trunc_normal_(self.position_embeddings, std=0.02)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x + self.position_embeddings
 
-class EmbeddingBlock(nn.Module):
+class ViTEmbeddingBlock(nn.Module):
     """
-    A block to combine patch embeddings and positional embeddings for input tensors.
+    A block to combine patch embeddings and positional embeddings for input tensors for a Visual Transformer.
 
     This class processes input tensors of shape (B, C, H, W) to extract patches, 
     apply positional embeddings, and incorporate a classification token (cls_token).
@@ -144,16 +144,18 @@ class EmbeddingBlock(nn.Module):
     """
 
     def __init__(self,  input_channels:int, input_height: int, input_width: int, patch_height: int, patch_width: int, embed_dim: int):
-        super(EmbeddingBlock, self).__init__()
+        super(ViTEmbeddingBlock, self).__init__()
         self.patch_embedding = PatchEmbedding(input_channels, input_height, input_width, patch_height, patch_width, embed_dim)
         self.num_patches = self.patch_embedding.num_patches
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim),requires_grad=True) # (1, 1, embed_dim)
         self.positional_embedding = PositionalEmbedding(self.num_patches + 1, embed_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch_size = x.size(0)
+
         patch_embeddings = self.patch_embedding(x)
 
-        cls_token = self.cls_token.expand(x.size(0), -1, -1)  # Expand to (B, 1, embed_dim)
+        cls_token = self.cls_token.expand(batch_size, -1, -1)  # Expand to (B, 1, embed_dim)
 
         embeddings = self.positional_embedding(torch.cat((cls_token, patch_embeddings), dim=1))
 
