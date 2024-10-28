@@ -1,7 +1,9 @@
 
 import torch
 import torch.nn as nn
-from typing import Optional
+from typing import Optional, Tuple
+
+from src.models.architectures.blocks.multihead_attention import MultiHeadAttention
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -14,8 +16,8 @@ class FeedForward(nn.Module):
     Args:
         embed_dim (int): The dimension of the input embeddings.
         ff_dim (int): The dimension of the hidden layer in the feed-forward network.
-        activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
-
+        activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
+    
     Attributes:
         linear1 (nn.Linear): The first linear layer.
         activation (nn.Module): The activation function.
@@ -39,14 +41,16 @@ class FeedForward(nn.Module):
             self.activation = nn.ReLU(inplace=True)
         elif activation == 'LeakyReLU':
             self.activation = nn.LeakyReLU(inplace=True)
+        elif activation == 'GeLU':
+            self.activation = nn.GELU()
         else:
-            raise ValueError("Unsupported activation type. Choose 'ReLU' or 'LeakyReLU'.")
+            raise ValueError("Unsupported activation type. Choose 'ReLU', 'LeakyReLU', or 'GeLU'.")
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.linear2(self.activation(self.linear1(x)))
     
-class TransformerBlock(nn.Module):
+class ViTransformerBlock(nn.Module):
     """
     A single block of a Transformer model.
 
@@ -58,7 +62,7 @@ class TransformerBlock(nn.Module):
         num_heads (int): The number of attention heads.
         ff_dim (int): The dimension of the feed-forward network.
         dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after attention layer and feed-forward. Default is None (no Dropout).
-        activation (str, optional): The activation function to use in the feed-forward. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
+        activation (str, optional): The activation function to use in the feed-forward. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
 
     Attributes:
         attention (nn.MultiheadAttention): The multi-head attention layer.
@@ -69,15 +73,19 @@ class TransformerBlock(nn.Module):
 
     Forward pass:
         The input tensor "x" is passed through the following sequence:
-        1. Multi-head self-attention layer
-        2. (Optional) Dropout
-        3. Residual connection and layer normalization
-        4. Feed-forward network
-        5. (Optional) Dropout
-        6. Residual connection and layer normalization
+        1. Layer normalization (layer_norm1)
+        2. Multi-head self-attention layer
+        3. (Optional) Dropout
+        4. Residual connection
+        5. Layer normalization (layer_norm2)
+        6. Feed-forward network
+        7. (Optional) Dropout
+        8. Residual connection
 
     Returns:
-        torch.Tensor: Output tensor of shape (B, N, embed_dim). 
+        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+            torch.Tensor: Output tensor of shape (B, N, embed_dim).
+            torch.Tensor: Attention weights, averaged across heads.
     """
 
     def __init__(self,
@@ -86,9 +94,9 @@ class TransformerBlock(nn.Module):
                  ff_dim: int,
                  dropout_prob: Optional[float] = None,
                  activation: Optional[str] = 'ReLU'):
-        super(TransformerBlock, self).__init__()
+        super(ViTransformerBlock, self).__init__()
         
-        self.attention = nn.MultiheadAttention(embed_dim, num_heads)
+        self.attention = MultiHeadAttention(embed_dim, num_heads, True) #nn.MultiheadAttention(embed_dim, num_heads)
         self.feed_forward = FeedForward(embed_dim, ff_dim, activation)
         
         self.layer_norm1 = nn.LayerNorm(embed_dim)
@@ -96,23 +104,31 @@ class TransformerBlock(nn.Module):
         
         self.dropout = nn.Dropout(dropout_prob) if dropout_prob is not None else None
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Layer normalization before attention
+        x_norm = self.layer_norm1(x)
+        
         # Multi-head self-attention
-        attn_output, _ = self.attention(x, x, x, attn_mask=mask)
+        attn_output, attn_weights = self.attention(x_norm, x_norm, x_norm, attn_mask=mask)
 
         if self.dropout is not None:
             attn_output = self.dropout(attn_output)
 
-        x = self.layer_norm1(x + attn_output)  
+        # Residual connection
+        x = x + attn_output  
+
+        # Layer normalization after attention
+        x_norm = self.layer_norm2(x)
 
         # Feed-forward network
-        ff_output = self.feed_forward(x)
+        ff_output = self.feed_forward(x_norm)
 
         if self.dropout is not None:
             ff_output = self.dropout(ff_output)
 
-        x = self.layer_norm2(x + ff_output)
+        # Residual connection
+        x = x + ff_output
 
-        return x
+        return x, attn_weights
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
