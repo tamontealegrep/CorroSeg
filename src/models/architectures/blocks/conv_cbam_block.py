@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from typing import Optional
-from src.models.architectures.blocks.cbam import CBAM
+from src.models.architectures.layers.cbam import CBAM
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 

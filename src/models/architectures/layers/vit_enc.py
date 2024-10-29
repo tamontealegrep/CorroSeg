@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from typing import Optional, Tuple
 
-from src.models.architectures.blocks.multihead_attention import MultiHeadAttention
+from src.models.architectures.layers.multihead_attention import MultiHeadAttention
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 

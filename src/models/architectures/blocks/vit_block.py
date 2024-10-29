@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 from typing import Optional, Tuple
 
-from src.models.architectures.blocks.vit_emb import ViTEmbedding
-from src.models.architectures.blocks.vit_enc import ViTEncoder
-from src.models.architectures.blocks.vit_dec import ViTDecoder
+from src.models.architectures.layers.vit_emb import ViTEmbedding
+from src.models.architectures.layers.vit_enc import ViTEncoder
+from src.models.architectures.layers.vit_dec import ViTDecoder
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 

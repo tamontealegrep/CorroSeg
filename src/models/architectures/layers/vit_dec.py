@@ -106,7 +106,7 @@ class AttentionMapReconstructor(nn.Module):
         self.patch_width = patch_width
         self.num_patches_h = input_height // patch_height
         self.num_patches_w = input_width // patch_width
-
+        
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         cls_attention = x[:,0,1:] # Omit self-attention for the CLS token
         cls_attention = F.softmax(cls_attention, dim=1)
@@ -149,6 +149,7 @@ class ViTDecoder(nn.Module):
         patch_width (int): The width of each patch.
 
     Attributes:
+        num_patches_h (int): Number of patches
         patch_reconstructor (PatchReconstructor): Module to reconstruct the image from patch embeddings.
         attention_map_reconstructor (AttentionMapReconstructor): Module to reconstruct the attention map from attention weights.
     
@@ -164,6 +165,7 @@ class ViTDecoder(nn.Module):
                  patch_height: int,
                  patch_width: int):
         super(ViTDecoder, self).__init__()
+        self.num_patches = (input_height // patch_height) * (input_width // patch_width)
         self.patch_reconstructor = PatchReconstructor(input_channels, input_height, input_width, 
                                                       patch_height, patch_width)
         self.attention_map_reconstructor = AttentionMapReconstructor(input_height, input_width, 
@@ -186,6 +188,8 @@ class ViTDecoder(nn.Module):
         # Reconstruct the attention map from attention weights
         attention_map = self.attention_map_reconstructor(attention_weights)
 
+        attention_map =  attention_map * self.num_patches
+        
         return output_tensor, attention_map
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
