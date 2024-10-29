@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Tuple
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 class PatchReconstructor(nn.Module):
@@ -71,7 +73,7 @@ class AttentionMapReconstructor(nn.Module):
     """
     A module to reconstruct an image from the attention weights provided by the CLS token.
 
-    This module takes the attention weights derived from a Vision Transformer,
+    This module takes the attention weights derived from a Vision Transformer of shape (batch_size, seq_len, seq_len),
     extract the CLS token attention with the other tokens, and reconstructs an attention map
     by assigning each patch a weight corresponding to the attention the CLS token pays to that patch.
 
@@ -132,4 +134,55 @@ class AttentionMapReconstructor(nn.Module):
 
         return attention_map
 
+class ViTDecoder(nn.Module):
+    """
+    A decoder module that reconstructs an image and an attention map
+    from the output of a transformer block.
+
+    Args:
+        input_channels (int): The number of channels in the input image (e.g., 3 for RGB images).
+        input_height (int): The height of the input image.
+        input_width (int): The width of the input image.
+        patch_height (int): The height of each patch.
+        patch_width (int): The width of each patch.
+
+    Attributes:
+        patch_reconstructor (PatchReconstructor): Module to reconstruct the image from patch embeddings.
+        attention_map_reconstructor (AttentionMapReconstructor): Module to reconstruct the attention map from attention weights.
+    
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+            torch.Tensor: Reconstructed image of shape (B, C, H, W).
+            torch.Tensor: Attention map of shape (B, 1, H, W).
+    """
+    def __init__(self,
+                 input_channels: int,
+                 input_height: int,
+                 input_width: int, 
+                 patch_height: int,
+                 patch_width: int):
+        super(ViTDecoder, self).__init__()
+        self.patch_reconstructor = PatchReconstructor(input_channels, input_height, input_width, 
+                                                      patch_height, patch_width)
+        self.attention_map_reconstructor = AttentionMapReconstructor(input_height, input_width, 
+                                                                    patch_height, patch_width)
+
+    def forward(self, embeddings: torch.Tensor, attention_weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            embeddings (torch.Tensor): Output tensor from the transformer block of shape (B, N, embed_dim).
+            attention_weights (torch.Tensor): Attention weights from the transformer block of shape (B, N, N).
+
+        Returns:
+            reconstructed_image (torch.Tensor): The reconstructed image of shape (B, C, H, W).
+            attention_map (torch.Tensor): The attention map of shape (B, 1, H, W).
+        """
+        # Reconstruct the image from embeddings
+        reconstructed_image = self.patch_reconstructor(embeddings)
+
+        # Reconstruct the attention map from attention weights
+        attention_map = self.attention_map_reconstructor(attention_weights)
+
+        return reconstructed_image, attention_map
+    
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

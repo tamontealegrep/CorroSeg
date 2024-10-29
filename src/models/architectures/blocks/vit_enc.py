@@ -131,7 +131,7 @@ class ViTLayer(nn.Module):
 
         return x, attn_weights
 
-class ViTEncoderBlock(nn.Module):
+class ViTEncoder(nn.Module):
     """
     A block of Transformer layers.
 
@@ -163,7 +163,7 @@ class ViTEncoderBlock(nn.Module):
                  num_layers: int,
                  dropout_prob: Optional[float] = None,
                  activation: Optional[str] = 'ReLU'):
-        super(ViTEncoderBlock, self).__init__()
+        super(ViTEncoder, self).__init__()
         self.layers = nn.ModuleList([
             ViTLayer(embed_dim, num_heads, ff_dim, dropout_prob, activation)
             for _ in range(num_layers)
