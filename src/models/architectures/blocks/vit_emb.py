@@ -118,7 +118,7 @@ class PositionalEmbedding(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x + self.position_embeddings
 
-class ViTEmbeddingBlock(nn.Module):
+class ViTEmbedding(nn.Module):
     """
     A block to combine patch embeddings and positional embeddings for input tensors for a Visual Transformer.
 
@@ -143,8 +143,14 @@ class ViTEmbeddingBlock(nn.Module):
         torch.Tensor: A tensor of shape (B, num_patches + 1, embed_dim) containing the combined embeddings, including the classification token.
     """
 
-    def __init__(self,  input_channels:int, input_height: int, input_width: int, patch_height: int, patch_width: int, embed_dim: int):
-        super(ViTEmbeddingBlock, self).__init__()
+    def __init__(self,
+                 input_channels: int,
+                 input_height: int,
+                 input_width: int,
+                 patch_height: int,
+                 patch_width: int,
+                 embed_dim: int):
+        super(ViTEmbedding, self).__init__()
         self.patch_embedding = PatchEmbedding(input_channels, input_height, input_width, patch_height, patch_width, embed_dim)
         self.num_patches = self.patch_embedding.num_patches
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim),requires_grad=True) # (1, 1, embed_dim)

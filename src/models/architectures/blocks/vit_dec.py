@@ -174,15 +174,15 @@ class ViTDecoder(nn.Module):
             attention_weights (torch.Tensor): Attention weights from the transformer block of shape (B, N, N).
 
         Returns:
-            reconstructed_image (torch.Tensor): The reconstructed image of shape (B, C, H, W).
+            output_tensor (torch.Tensor): The reconstructed output tensor of shape (B, C, H, W).
             attention_map (torch.Tensor): The attention map of shape (B, 1, H, W).
         """
-        # Reconstruct the image from embeddings
-        reconstructed_image = self.patch_reconstructor(embeddings)
+        # Reconstruct the output tensor from embeddings
+        output_tensor = self.patch_reconstructor(embeddings)
 
         # Reconstruct the attention map from attention weights
         attention_map = self.attention_map_reconstructor(attention_weights)
 
-        return reconstructed_image, attention_map
+        return output_tensor, attention_map
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

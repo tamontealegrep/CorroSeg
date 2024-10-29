@@ -138,10 +138,10 @@ class ViTEncoder(nn.Module):
     This block consists of multiple ViTLayer stacked together.
 
     Args:
-        embed_dim (int): The dimension of the input embeddings.
-        num_heads (int): The number of attention heads.
-        ff_dim (int): The dimension of the feed-forward network.
         num_layers (int): The number of ViTLayer to stack.
+        num_heads (int): The number of attention heads.
+        embed_dim (int): The dimension of the input embeddings.
+        ff_dim (int): The dimension of the feed-forward network.
         dropout_prob (float, optional): Probability of dropout. Default is None (no Dropout).
         activation (str, optional): The activation function to use in the feed-forward. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
 
@@ -157,10 +157,10 @@ class ViTEncoder(nn.Module):
     """
 
     def __init__(self,
-                 embed_dim: int,
-                 num_heads: int,
-                 ff_dim: int,
                  num_layers: int,
+                 num_heads: int,
+                 embed_dim: int,
+                 ff_dim: int,
                  dropout_prob: Optional[float] = None,
                  activation: Optional[str] = 'ReLU'):
         super(ViTEncoder, self).__init__()
