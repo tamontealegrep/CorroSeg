@@ -53,7 +53,7 @@ class ViTBlock(nn.Module):
                  dropout_prob: Optional[float] = None,
                  activation: Optional[str] = 'ReLU'):
         super(ViTBlock, self).__init__()
-        self.embed_dim = patch_height * patch_width
+        self.embed_dim = input_channels * patch_height * patch_width
 
         self.embeder = ViTEmbedding(input_channels, input_height, input_width, patch_height, patch_width, self.embed_dim)
 

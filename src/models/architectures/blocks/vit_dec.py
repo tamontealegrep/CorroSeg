@@ -48,9 +48,11 @@ class PatchReconstructor(nn.Module):
 
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         batch_size, num_patches, embed_dim = embeddings.shape
-
-        # Reshape embeddings to (B, num_patches_h, num_patches_w, C * patch_h * patch_w)
-        patches_flat = embeddings.view(batch_size, self.num_patches_h, self.num_patches_w, embed_dim)
+        expected_num_patches = self.num_patches_h * self.num_patches_w
+        assert num_patches == expected_num_patches, f"Expected {expected_num_patches} patches, but got {num_patches}."
+        
+        # Reshape embeddings to (batch_size, num_patches_h, num_patches_w, channels, patch_h * patch_w)
+        patches_flat = embeddings.view(batch_size, self.num_patches_h, self.num_patches_w, self.input_channels, self.patch_height * self.patch_width)
 
         # Initialize a tensor to hold the reconstructed image
         reconstructed_image = torch.zeros((batch_size, self.input_channels, self.input_height, self.input_width), device=embeddings.device)
@@ -59,7 +61,7 @@ class PatchReconstructor(nn.Module):
         for i in range(self.num_patches_h):
             for j in range(self.num_patches_w):
                 # Get the corresponding embedding for the patch
-                patch_embedding = patches_flat[:, i, j, :]
+                patch_embedding = patches_flat[:, i, j, :, :]
 
                 # Reshape it back to the original patch shape
                 patch = patch_embedding.view(batch_size, self.input_channels, self.patch_height, self.patch_width)
@@ -178,7 +180,8 @@ class ViTDecoder(nn.Module):
             attention_map (torch.Tensor): The attention map of shape (B, 1, H, W).
         """
         # Reconstruct the output tensor from embeddings
-        output_tensor = self.patch_reconstructor(embeddings)
+        # (batch_size, num_patches + 1, embed_dim) --> (batch_size, num_patches, embed_dim)
+        output_tensor = self.patch_reconstructor(embeddings[:, 1:, :]) 
 
         # Reconstruct the attention map from attention weights
         attention_map = self.attention_map_reconstructor(attention_weights)
