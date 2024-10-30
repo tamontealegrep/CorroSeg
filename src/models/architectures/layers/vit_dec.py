@@ -2,38 +2,37 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from typing import Tuple
+from typing import Tuple, Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 class PatchReconstructor(nn.Module):
     """
-    A module to reconstruct an image from its patch embeddings.
+    A module to reconstruct a tensor from its patch embeddings.
 
-    This module takes embeddings derived from patches of an input image
-    and rearranges them to reconstruct the original image. Each embedding
-    corresponds to a patch of the input image, and the module combines
-    these patches back into the full image.
+    This module takes embeddings derived from patches of an input tensor
+    and rearranges them to reconstruct a tensor with the same shape of the original tensor. Each embedding
+    corresponds to a patch of the input tensor, and the module combines
+    these patches back into the full tensor.
 
     Args:
-        input_channels (int): The number of channels in the input image (e.g., 3 for RGB images).
-        input_height (int): The height of the input image.
-        input_width (int): The width of the input image.
+        input_channels (int): The number of channels in the input tensor.
+        input_height (int): The height of the input tensor.
+        input_width (int): The width of the input tensor.
         patch_height (int): The height of each patch.
         patch_width (int): The width of each patch.
 
     Attributes:
-        input_channels (int): The number of channels in the input image.
-        input_height (int): The height of the input image.
-        input_width (int): The width of the input image.
+        input_channels (int): The number of channels in the input tensor.
+        input_height (int): The height of the input tensor.
+        input_width (int): The width of the input tensor.
         patch_height (int): The height of each patch.
         patch_width (int): The width of each patch.
-        num_patches_h (int): The number of patches along the height of the image.
-        num_patches_w (int): The number of patches along the width of the image.
+        num_patches_h (int): The number of patches along the height of the tensor.
+        num_patches_w (int): The number of patches along the width of the tensor.
 
     Returns:
-        torch.Tensor: A reconstructed image of shape (batch_size, input_channels, input_height, input_width),
+        torch.Tensor: A reconstructed tensor of shape (batch_size, input_channels, input_height, input_width),
                       where each patch is populated according to its corresponding embedding.
     """
     def __init__(self, input_channels: int, input_height: int, input_width: int, patch_height: int, patch_width: int):
@@ -54,10 +53,10 @@ class PatchReconstructor(nn.Module):
         # Reshape embeddings to (batch_size, num_patches_h, num_patches_w, channels, patch_h * patch_w)
         patches_flat = embeddings.view(batch_size, self.num_patches_h, self.num_patches_w, self.input_channels, self.patch_height * self.patch_width)
 
-        # Initialize a tensor to hold the reconstructed image
-        reconstructed_image = torch.zeros((batch_size, self.input_channels, self.input_height, self.input_width), device=embeddings.device)
+        # Initialize a tensor to hold the reconstructed tensor
+        reconstructed_tensor = torch.zeros((batch_size, self.input_channels, self.input_height, self.input_width), device=embeddings.device)
 
-        # Combine the patches back into the original image shape
+        # Combine the patches back into the original tensor shape
         for i in range(self.num_patches_h):
             for j in range(self.num_patches_w):
                 # Get the corresponding embedding for the patch
@@ -66,10 +65,10 @@ class PatchReconstructor(nn.Module):
                 # Reshape it back to the original patch shape
                 patch = patch_embedding.view(batch_size, self.input_channels, self.patch_height, self.patch_width)
 
-                # Place the patch in the correct location in the reconstructed image
-                reconstructed_image[:, :, i*self.patch_height:(i+1)*self.patch_height, j*self.patch_width:(j+1)*self.patch_width] = patch
+                # Place the patch in the correct location in the reconstructed tensor
+                reconstructed_tensor[:, :, i*self.patch_height:(i+1)*self.patch_height, j*self.patch_width:(j+1)*self.patch_width] = patch
 
-        return reconstructed_image
+        return reconstructed_tensor
     
 class AttentionMapReconstructor(nn.Module):
     """
@@ -80,14 +79,14 @@ class AttentionMapReconstructor(nn.Module):
     by assigning each patch a weight corresponding to the attention the CLS token pays to that patch.
 
     Args:
-        input_height (int): Height of the input image.
-        input_width (int): Width of the input image.
+        input_height (int): Height of the input tensor.
+        input_width (int): Width of the input tensor.
         patch_height (int): Height of each patch.
         patch_width (int): Width of each patch.
 
     Attributes:
-        input_height (int): Height of the input image.
-        input_width (int): Width of the input image.
+        input_height (int): Height of the input tensor.
+        input_width (int): Width of the input tensor.
         patch_height (int): Height of each patch.
         patch_width (int): Width of each patch.
         num_patches_h (int): Number of patches along the height.
@@ -109,7 +108,7 @@ class AttentionMapReconstructor(nn.Module):
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         cls_attention = x[:,0,1:] # Omit self-attention for the CLS token
-        cls_attention = F.softmax(cls_attention, dim=1)
+        #cls_attention = F.softmax(cls_attention, dim=1)
         
         batch_size, seq_len = cls_attention.shape
 
@@ -142,53 +141,68 @@ class ViTDecoder(nn.Module):
     from the output of a transformer block.
 
     Args:
-        input_channels (int): The number of channels in the input image (e.g., 3 for RGB images).
+        input_channels (int): The number of channels in the input image.
         input_height (int): The height of the input image.
         input_width (int): The width of the input image.
         patch_height (int): The height of each patch.
         patch_width (int): The width of each patch.
+        embed_dim (int): Dimension of the output embeddings for each patch.
+        use_cls_token (bool, optional): Whether to include a classification token in the embeddings. Default is False.
 
     Attributes:
-        num_patches_h (int): Number of patches
+        num_patches (int): Number of patches calculated from the input dimensions.
+        use_cls_token (bool): Flag indicating if a classification token was included in the embeddings.
         patch_reconstructor (PatchReconstructor): Module to reconstruct the image from patch embeddings.
-        attention_map_reconstructor (AttentionMapReconstructor): Module to reconstruct the attention map from attention weights.
-    
+        attention_map_reconstructor (Optional[AttentionMapReconstructor]): Module to reconstruct the attention map from attention weights, initialized only if `use_cls_token` is True.
+        embed_scale (bool): Flag indicating if scaling is required based on the embedding dimension and feature dimension.
+        scaler (Optional[nn.Linear]): Linear layer to scale embeddings if required.
+
     Returns:
         Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-            torch.Tensor: Reconstructed image of shape (B, C, H, W).
-            torch.Tensor: Attention map of shape (B, 1, H, W).
+            torch.Tensor: Reconstructed image of shape (batch_size, input_channels, input_height, input_width).
+            torch.Tensor: Attention map of shape (batch_size, 1, input_height, input_width) if `use_cls_token` is True, else None.
     """
     def __init__(self,
                  input_channels: int,
                  input_height: int,
                  input_width: int, 
                  patch_height: int,
-                 patch_width: int):
+                 patch_width: int,
+                 embed_dim: int,
+                 use_cls_token: Optional[bool] = False):
         super(ViTDecoder, self).__init__()
+        feature_dim = input_channels * patch_height * patch_width
+        self.embed_scale = True if embed_dim != feature_dim  else False
+        self.use_cls_token = use_cls_token
+        self.scaler = nn.Linear(embed_dim, feature_dim) if self.embed_scale else None
+        self.patch_reconstructor = PatchReconstructor(input_channels, input_height, input_width, patch_height, patch_width)
+        self.attention_map_reconstructor = AttentionMapReconstructor(input_height, input_width, patch_height, patch_width) if self.use_cls_token else None
         self.num_patches = (input_height // patch_height) * (input_width // patch_width)
-        self.patch_reconstructor = PatchReconstructor(input_channels, input_height, input_width, 
-                                                      patch_height, patch_width)
-        self.attention_map_reconstructor = AttentionMapReconstructor(input_height, input_width, 
-                                                                    patch_height, patch_width)
 
     def forward(self, embeddings: torch.Tensor, attention_weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
-            embeddings (torch.Tensor): Output tensor from the transformer block of shape (B, N, embed_dim).
-            attention_weights (torch.Tensor): Attention weights from the transformer block of shape (B, N, N).
+            embeddings (torch.Tensor): Output tensor from the transformer block of shape (batch_size, num_patches, embed_dim).
+            attention_weights (torch.Tensor): Attention weights from the transformer block of shape (batch_size, num_patches, num_patches).
 
         Returns:
-            output_tensor (torch.Tensor): The reconstructed output tensor of shape (B, C, H, W).
-            attention_map (torch.Tensor): The attention map of shape (B, 1, H, W).
+            Tuple[torch.Tensor, Optional[torch.Tensor]]: A tuple containing:
+                output_tensor (torch.Tensor): The reconstructed output tensor of shape (batch_size, input_channels, input_height, input_width).
+                attention_map (torch.Tensor or None): The attention map of shape (batch_size, 1, input_height, input_width) if `use_cls_token` is True, else None.
         """
         # Reconstruct the output tensor from embeddings
-        # (batch_size, num_patches + 1, embed_dim) --> (batch_size, num_patches, embed_dim)
-        output_tensor = self.patch_reconstructor(embeddings[:, 1:, :]) 
+        if self.embed_scale:
+            embeddings = self.scaler(embeddings)
+        if self.use_cls_token:
+            embeddings = embeddings[:, 1:, :] # (batch_size, num_patches + 1, embed_dim) --> (batch_size, num_patches, embed_dim)
+        output_tensor = self.patch_reconstructor(embeddings) 
 
         # Reconstruct the attention map from attention weights
-        attention_map = self.attention_map_reconstructor(attention_weights)
-
-        attention_map =  attention_map * self.num_patches
+        if self.use_cls_token:
+            attention_map = self.attention_map_reconstructor(attention_weights)
+            attention_map = attention_map * self.num_patches
+        else:
+            attention_map = None
         
         return output_tensor, attention_map
     

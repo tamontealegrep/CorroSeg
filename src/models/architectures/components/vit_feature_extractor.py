@@ -16,6 +16,7 @@ class ViTFeatureExtractor(nn.Module):
         input_width (int): Width of the input tensors.
         patch_height (int): Height of each patch to be extracted from the input.
         patch_width (int): Width of each patch to be extracted from the input.
+        embed_dim (int): Dimension of the output embeddings for each patch.
         num_layers (int): The number of Visual Transformer layers to stack.
         num_heads (int): The number of attention heads in each transformer layer.
         block_type (Type[nn.Module]): The type of block to use for the transformer layers.
@@ -41,6 +42,7 @@ class ViTFeatureExtractor(nn.Module):
                  input_width: int,
                  patch_height: int,
                  patch_width: int,
+                 embed_dim: int,
                  num_layers: int,
                  num_heads: int,
                  block_type: Type[nn.Module],
@@ -51,14 +53,14 @@ class ViTFeatureExtractor(nn.Module):
                                  input_width,
                                  patch_height,
                                  patch_width,
+                                 embed_dim,
                                  num_layers,
                                  num_heads,
                                  **kwargs)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         features_tensor, attention_map = self.blocks(x)
-
-        output = torch.cat((x, features_tensor), dim=1)
+        output = features_tensor
 
         return output, attention_map
     

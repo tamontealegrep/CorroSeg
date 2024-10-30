@@ -23,10 +23,12 @@ class ViTBlock(nn.Module):
         input_width (int): Width of the input tensors.
         patch_height (int): Height of each patch.
         patch_width (int): Width of each patch.
+        embed_dim (int): Dimension of the output embeddings for each patch.
         num_layers (int): The number of Visual Transformer layers to stack.
         num_heads (int): The number of attention heads in each transformer layer.
         dropout_prob (float, optional): Probability of dropout applied to the feed-forward layers. Default is None (no dropout).
         activation (str, optional): The activation function to use in the feed-forward layers. Default is "ReLU". Options include "ReLU", "LeakyReLU", and "GeLU".
+        use_cls_token (bool, optional): Whether to include a classification token. Default False.
 
     Attributes:
         embed_dim (int): Dimension of the output embeddings for each patch.
@@ -39,8 +41,8 @@ class ViTBlock(nn.Module):
     
     Returns:
         Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-            (torch.Tensor): The reconstructed output tensor of shape (B, C, H, W).
-            (torch.Tensor): The attention map of shape (B, 1, H, W).
+            (torch.Tensor): The reconstructed output tensor of shape (batch_size, channels, height, width).
+            (torch.Tensor): The attention map of shape (batch_size, 1, height, width).
     """
     def __init__(self,
                  input_channels: int,
@@ -48,18 +50,20 @@ class ViTBlock(nn.Module):
                  input_width: int,
                  patch_height: int,
                  patch_width: int,
+                 embed_dim: int,
                  num_layers: int,
                  num_heads: int,
                  dropout_prob: Optional[float] = None,
-                 activation: Optional[str] = 'ReLU'):
+                 activation: Optional[str] = 'ReLU',
+                 use_cls_token: Optional[bool] = False):
         super(ViTBlock, self).__init__()
-        self.embed_dim = input_channels * patch_height * patch_width
+        self.embed_dim = embed_dim
 
-        self.embeder = ViTEmbedding(input_channels, input_height, input_width, patch_height, patch_width, self.embed_dim)
+        self.embeder = ViTEmbedding(input_channels, input_height, input_width, patch_height, patch_width, self.embed_dim, use_cls_token)
 
         self.encoder = ViTEncoder(num_layers, num_heads, self.embed_dim, self.embed_dim * 4, dropout_prob, activation)
 
-        self.decoder = ViTDecoder(input_channels, input_height, input_width, patch_height, patch_width)
+        self.decoder = ViTDecoder(input_channels, input_height, input_width, patch_height, patch_width, self.embed_dim, use_cls_token)
     
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # (batch_size, channels, height, width) --> (batch_size, num_patches + 1, embed_dim)
