@@ -33,7 +33,7 @@ class ChannelAttention(nn.Module):
         5. The results from the average and max pooling paths are summed and passed through a Sigmoid activation.
     
     Returns:
-        torch.Tensor: The output tensor of shape (B, C, 1, 1), where each channel is reweighted based on the attention mechanism.
+        torch.Tensor: The output tensor of shape (batch_size, channels, 1, 1), where each channel is reweighted based on the attention mechanism.
     """
     def __init__(self, input_channels:int, reduction:int=16, activation:Optional[str]='ReLU'):
         super(ChannelAttention, self).__init__()
@@ -74,13 +74,13 @@ class SpatialAttention(nn.Module):
 
     Forward pass:
         The input tensor "x" is passed through the following sequence:
-        1. Compute the average pooling and max pooling across the channel dimension (C).
+        1. Compute the average pooling and max pooling across the channel dimension.
         2. Concatenate the pooled results along the channel dimension.
         3. Apply a convolutional layer to the concatenated tensor to produce a single-channel output.
         4. Apply a Sigmoid activation to generate the final attention map.
 
     Returns:
-        torch.Tensor: The output tensor of shape (B, 1, H, W), where each pixel is reweighted based on the spatial attention mechanism.
+        torch.Tensor: The output tensor of shape (batch_size, 1, height, width), where each pixel is reweighted based on the spatial attention mechanism.
     """
     def __init__(self, kernel_size:int=7):
         super(SpatialAttention, self).__init__()

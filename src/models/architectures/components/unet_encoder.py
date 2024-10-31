@@ -10,7 +10,7 @@ class UnetEncoder(nn.Module):
     An encoder for U-Net architecture that applies specified convolutional blocks followed by max pooling.
 
     Args:
-        in_channels (int): Number of input channels.
+        input_channels (int): Number of input channels.
         base_channels (int): Base number of output channels, will be multiplied by powers of 2 for each layer.
         num_layers (int): Number of layers in the encoder.
         block_type (Type[nn.Module]): The type of block to use.
@@ -33,7 +33,7 @@ class UnetEncoder(nn.Module):
     """
 
     def __init__(self,
-                 in_channels: int,
+                 input_channels: int,
                  base_channels: int,
                  num_layers: int, 
                  block_type: Type[nn.Module],
@@ -43,7 +43,7 @@ class UnetEncoder(nn.Module):
         self.downsample = nn.MaxPool2d(kernel_size=2, stride=2)
 
         for i in range(num_layers):
-            in_ch = in_channels if i == 0 else out_ch
+            in_ch = input_channels if i == 0 else out_ch
             out_ch = base_channels * (2 ** i)
             self.blocks.append(block_type(in_ch, out_ch, **kwargs))
 
