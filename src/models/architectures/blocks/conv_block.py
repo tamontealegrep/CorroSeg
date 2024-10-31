@@ -8,12 +8,12 @@ from typing import Optional
 class ConvBlock(nn.Module):
     """
     A block that applies two consecutive convolutional layers with Batch Normalization
-    and ReLU activation. This is commonly used in U-Net architectures to enhance feature 
+    and an activation. This is commonly used in U-Net architectures to enhance feature 
     extraction capabilities.
 
     Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
+        input_channels (int): Number of input channels.
+        output_channels (int): Number of output channels.
         activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
         dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. Default is None (no Dropout).
 
@@ -35,15 +35,15 @@ class ConvBlock(nn.Module):
         torch.Tensor: The output tensor after two convolutional operations with normalization and activation applied, and optionally dropout.
     """
     def __init__(self,
-                 in_channels:int,
-                 out_channels:int,
-                 activation:Optional[str]='ReLU',
+                 input_channels:int,
+                 output_channels:int,
+                 activation:Optional[str]="ReLU",
                  dropout_prob:Optional[float]=None):
         super(ConvBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
-        self.norm1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        self.norm2 = nn.BatchNorm2d(out_channels)
+        self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=3, padding=1)
+        self.norm1 = nn.BatchNorm2d(output_channels)
+        self.conv2 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
+        self.norm2 = nn.BatchNorm2d(output_channels)
 
         # Set the activation function
         if activation == 'ReLU':

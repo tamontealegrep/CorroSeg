@@ -15,7 +15,7 @@ class ChannelAttention(nn.Module):
     multilayer perceptron (MLP) to generate channel-wise attention weights.
     
     Args:
-        in_channels (int): Number of input channels.
+        input_channels (int): Number of input channels.
         reduction (int, optional): Reduction factor for the channel dimension. Default is 16.
         activation (str, optional): Activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
 
@@ -35,15 +35,15 @@ class ChannelAttention(nn.Module):
     Returns:
         torch.Tensor: The output tensor of shape (B, C, 1, 1), where each channel is reweighted based on the attention mechanism.
     """
-    def __init__(self, in_channels:int, reduction:int=16, activation:Optional[str]='ReLU'):
+    def __init__(self, input_channels:int, reduction:int=16, activation:Optional[str]='ReLU'):
         super(ChannelAttention, self).__init__()
-        self.fc1 = nn.Linear(in_channels, in_channels // reduction, bias=False)
-        self.fc2 = nn.Linear(in_channels // reduction, in_channels, bias=False)
+        self.fc1 = nn.Linear(input_channels, input_channels // reduction, bias=False)
+        self.fc2 = nn.Linear(input_channels // reduction, input_channels, bias=False)
 
         # Set the activation function
-        if activation == 'ReLU':
+        if activation == "ReLU":
             self.activation = nn.ReLU(inplace=True)
-        elif activation == 'LeakyReLU':
+        elif activation == "LeakyReLU":
             self.activation = nn.LeakyReLU(inplace=True)
         else:
             raise ValueError("Unsupported activation type. Choose 'ReLU' or 'LeakyReLU'.")
@@ -102,7 +102,7 @@ class CBAM(nn.Module):
     while suppressing less relevant ones.
 
     Args:
-        in_channels (int): Number of input channels.
+        input_channels (int): Number of input channels.
         reduction (int, optional): Reduction factor for the channel dimension in channel attention. Default is 16.
         kernel_size (int, optional): Size of the convolution kernel for spatial attention. Default is 7.
         activation (str, optional): Activation function to use in channel attention. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
@@ -120,9 +120,9 @@ class CBAM(nn.Module):
     Returns:
         torch.Tensor: The output tensor after applying both attention mechanisms, with the same shape as the input.
     """
-    def __init__(self, in_channels, reduction=16, kernel_size=7, activation:Optional[str]='ReLU'):
+    def __init__(self, input_channels, reduction=16, kernel_size=7, activation:Optional[str]="ReLU"):
         super(CBAM, self).__init__()
-        self.channel_attention = ChannelAttention(in_channels, reduction, activation)
+        self.channel_attention = ChannelAttention(input_channels, reduction, activation)
         self.spatial_attention = SpatialAttention(kernel_size)
 
     def forward(self, x:torch.Tensor) -> torch.Tensor:

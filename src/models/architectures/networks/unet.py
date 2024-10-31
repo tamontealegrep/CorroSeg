@@ -16,8 +16,8 @@ class Unet(nn.Module):
     U-Net architecture combining encoder, bottleneck, and decoder components.
 
     Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
+        input_channels (int): Number of input channels.
+        output_channels (int): Number of output channels.
         base_channels (int): Base number of output channels, will be multiplied by powers of 2 for each layer.
         num_layers (int): Number of layers in the encoder and decoder.
         encoder_block_type (Type[nn.Module]): The type of block to use for the encoder.
@@ -42,8 +42,8 @@ class Unet(nn.Module):
     """
 
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
+                 input_channels: int,
+                 output_channels: int,
                  base_channels: int, 
                  num_layers: int,
                  encoder_block_type: Type[nn.Module], 
@@ -61,13 +61,13 @@ class Unet(nn.Module):
         bottleneck_kwargs = bottleneck_kwargs or {}
         decoder_kwargs = decoder_kwargs or {}
         
-        self.encoder = UnetEncoder(in_channels, base_channels, num_layers, encoder_block_type, **encoder_kwargs)
+        self.encoder = UnetEncoder(input_channels, base_channels, num_layers, encoder_block_type, **encoder_kwargs)
         
         self.bottleneck = UnetBottleneck(base_channels, num_layers, bottleneck_block_type, **bottleneck_kwargs)
         
         self.decoder = UnetDecoder(base_channels, num_layers, decoder_block_type, **decoder_kwargs)
         
-        self.final_conv = nn.Conv2d(base_channels, out_channels, kernel_size=1)
+        self.final_conv = nn.Conv2d(base_channels, output_channels, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

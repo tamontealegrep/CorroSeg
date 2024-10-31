@@ -9,11 +9,11 @@ from src.models.architectures.layers.cbam import CBAM
 class ConvCBAMBlock(nn.Module):
     """
     A block that applies two consecutive convolutional layers with Batch Normalization,
-    ReLU activation, and CBAM attention. This is commonly used in U-Net architectures 
+    activation, and CBAM attention. This is commonly used in U-Net architectures 
     to enhance feature extraction capabilities.
 
     Args:
-        in_channels (int): Number of input channels.
+        input_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
         dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. Default is None (no Dropout).
@@ -42,29 +42,29 @@ class ConvCBAMBlock(nn.Module):
         and activation applied, attention and optionally dropout.
     """
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 activation: Optional[str] = 'ReLU',
+                 input_channels: int,
+                 output_channels: int,
+                 activation: Optional[str] = "ReLU",
                  dropout_prob: Optional[float] = None,
                  cbam_reduction: int = 16,
                  cbam_kernel_size: int = 7,
-                 cbam_activation: Optional[str] = 'ReLU'):
+                 cbam_activation: Optional[str] = "ReLU"):
         super(ConvCBAMBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
-        self.norm1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        self.norm2 = nn.BatchNorm2d(out_channels)
+        self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=3, padding=1)
+        self.norm1 = nn.BatchNorm2d(output_channels)
+        self.conv2 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
+        self.norm2 = nn.BatchNorm2d(output_channels)
 
         # Set the activation function
-        if activation == 'ReLU':
+        if activation == "ReLU":
             self.activation = nn.ReLU(inplace=True)
-        elif activation == 'LeakyReLU':
+        elif activation == "LeakyReLU":
             self.activation = nn.LeakyReLU(inplace=True)
         else:
             raise ValueError("Unsupported activation type. Choose 'ReLU' or 'LeakyReLU'.")
 
         # CBAM module
-        self.cbam = CBAM(out_channels, reduction=cbam_reduction, kernel_size=cbam_kernel_size, activation=cbam_activation)
+        self.cbam = CBAM(output_channels, reduction=cbam_reduction, kernel_size=cbam_kernel_size, activation=cbam_activation)
 
         # Optional dropout layer
         self.dropout = nn.Dropout(dropout_prob) if dropout_prob is not None else None
