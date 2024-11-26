@@ -3,8 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from typing import Any, List, Dict, Tuple, Optional, Union
-from src.data.utils.reconstruct import reconstruct_multiple
-from src.data.utils.expand import expand_multiple
+from src.data.expand import expand_multiple
 from src.utils.files import save_dict_arrays
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -128,7 +127,56 @@ def load_raw_data(X_folder: str, y_file: Optional[str] = None) -> Tuple[dict,dic
 
     return X_raw, y_raw
 
-def data_load(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, expand:bool=False, save_path:str=None) -> Dict[Any,np.ndarray]:
+def array_reconstruct(patches:List[np.ndarray], num_columns:int) -> np.ndarray:
+    """
+    Reconstruct an array from a list of numpy arrays (patches) into a grid format.
+
+    Parameters:
+        patches (list): A list of 2D numpy arrays representing array patches.
+        num_columns (int): The number of columns in the reconstructed image.
+
+    Returns:
+        numpy.ndarray: A 2D reconstructed array.
+    
+    """
+    num_patches = len(patches)
+    num_rows = (num_patches + num_columns - 1) // num_columns
+
+    patch_h, patch_w = patches[0].shape
+
+    # Create an output array with the appropriate dimensions
+    output_array = np.zeros((num_rows * patch_h, num_columns * patch_w))
+
+    for i, patch in enumerate(patches):
+        row = i // num_columns
+        column = i % num_columns
+        output_array[row * patch_h: (row + 1) * patch_h, column * patch_w: (column + 1) * patch_w] = patch
+
+    return output_array
+
+def reconstruct_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]], column_config: Dict[Any, int]) -> Dict[Any, Optional[np.ndarray]]:
+    """
+    Reconstruct multiple arrays based on specified column configurations.
+
+    Parameters:
+        data_dict (dict): Dictionary (ID: list[np.ndarray]) of list of 2D numpy arrays.
+        column_config (dict): Dictionary (ID: num_columns) to reconstruct the arrays.
+
+    Returns:
+        reconstructed_data (dict): Dictionary (ID: reconstructed_array) of reconstructed arrays.
+        
+    """
+    reconstructed_data = {}
+
+    for id in data_dict.keys():
+        if data_dict[id] is None:
+            reconstructed_data[id] = None
+        else:
+            reconstructed_data[id] = array_reconstruct(data_dict[id], column_config[id])
+
+    return reconstructed_data
+
+def data_reconstruct(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, save_path:str=None) -> Tuple[Dict[Any, np.ndarray], Dict[Any,np.ndarray]]:
     """
     Load and reconstruct data arrays from patch files.
 
@@ -136,17 +184,16 @@ def data_load(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, 
     and a file for labels (y). The data is reconstructed using a provided column 
     configuration. If specified, the resulting arrays are saved to the given path.
 
-    Args:
+    Parameters:
         X_folder_path (str): Path to the folder containing the X patch files.
         y_file_path (str): Path to the file containing the y patches. Can be None if (y) does not exist.
         column_config (dict): Configuration that defines how the data should be reconstructed.
-        expand (bool ,optional): Expand the data for continuity. Default False.
         save_path (str, optional): Path where the unexpanded arrays will be saved. If None, the arrays are not saved.
 
     Returns:
         tuple: A tuple containing:
-            X (numpy.ndarray): Reconstructed array of features.
-            y (numpy.ndarray): Reconstructed array of labels.
+            X (dict): Dictionary (ID: numpy.ndarray) of reconstructed array of features.
+            y (dict): Dictionary (ID: numpy.ndarray) of reconstructed array of labels.
 
     Raises:
         FileNotFoundError: If the provided paths do not exist.
@@ -159,10 +206,6 @@ def data_load(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, 
 
     if save_path is not None:
         save_dict_arrays(save_path, X, y)
-
-    if expand:  
-        X = expand_multiple(X)
-        y = expand_multiple(y)
 
     return X, y
 

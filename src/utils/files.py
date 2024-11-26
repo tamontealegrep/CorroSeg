@@ -3,7 +3,7 @@ import os
 import yaml
 import pickle
 import numpy as np
-from typing import Any
+from typing import Any, Tuple
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -80,5 +80,39 @@ def save_dict_arrays(folder_path:str, X:dict, y:dict=None) -> None:
         for id, array in y.items():
             if array is not None:
                 np.save(os.path.join(y_folder, f"y_{id}.npy"), array)
+
+def load_dict_arrays(folder_path: str) -> Tuple[dict,dict]:
+    """
+    Load arrays from specified folder paths. Loads arrays for X and y from
+    their respective subdirectories and returns them as dictionaries.
+
+    Parameters:
+        folder_path (str): Directory path where arrays are stored.
+
+    Returns:
+        tuple: A tuple containing:
+        X (dict): A dictionary with the arrays in 'X' folder.
+        y (dict): A dictionary with the arrays in 'y' folder.
+    """
+    X_folder = os.path.join(folder_path, "X")
+    y_folder = os.path.join(folder_path, "y")
+
+    # Load X arrays
+    X = {}
+    if os.path.exists(X_folder):
+        for file_name in os.listdir(X_folder):
+            if file_name.endswith(".npy"):
+                array_id = file_name.split("_")[1].replace(".npy", "")
+                X[array_id] = np.load(os.path.join(X_folder, file_name))
+
+    # Load y arrays
+    y = {}
+    if os.path.exists(y_folder):
+        for file_name in os.listdir(y_folder):
+            if file_name.endswith(".npy"):
+                array_id = file_name.split("_")[1].replace(".npy", "")
+                y[array_id] = np.load(os.path.join(y_folder, file_name))
+
+    return X, y
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

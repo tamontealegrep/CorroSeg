@@ -1,6 +1,6 @@
 
 import numpy as np
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -45,4 +45,26 @@ def expand_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]]) -> Dict[An
 
     return expanded_data
 
+def data_expand(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray]=None) -> Tuple[Dict[Any, np.ndarray], Dict[Any,np.ndarray]]:
+    """
+    Expand data arrays.
+
+    This function expands the data for cilindrical continuity.
+
+    Parameters:
+        X (dict): Dictionary where each key corresponds to an ID and each value is a numpy.ndarray 
+                  representing a feature array that will be expanded.
+        y (dict): Dictionary where each key corresponds to an ID and each value is a numpy.ndarray 
+                  representing a label array that will be expanded. Can be None if no labels exist. Default None.
+
+    Returns:
+        tuple: A tuple containing:
+            X (dict): Dictionary (ID: numpy.ndarray) of expanded array of features.
+            y (dict): Dictionary (ID: numpy.ndarray) of expanded array of labels.
+
+    """
+    X = expand_multiple(X)
+    y = expand_multiple(y)
+
+    return X, y
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

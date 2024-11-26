@@ -3,10 +3,11 @@ folders:
   save_folder: "./data/processed"
 
 setup:
+  num_channels: 1
   height_size: 360 # Height of the sections
   width_size: 36 # Width of the sections
   height_stride: 360
-  width_stride: 36
+  width_stride: 18
   default_value: 0
   validation_fraction: 0.2
   split_seed: 42
@@ -38,3 +39,15 @@ columns:
     13: 1
     14: 1
     15: 1
+
+random_transformation:
+  gaussian_alpha: 0.2
+  salt_pepper_prob: 0.005
+  salt_value: 5
+  pepper_value: -5
+  cutout_min: 0.2
+  cutout_max: 0.5
+  resize_min: 0.8
+  resize_max: 1.2
+  rotation_min: -30
+  rotation_max: 30

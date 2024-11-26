@@ -1,7 +1,8 @@
 
 import numpy as np
 from scipy.ndimage import generic_filter
-from typing import Tuple, Optional, Union, List, Any
+from typing import Union, List, Tuple, Optional, Any
+from src.data.scale import Scaler
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -227,6 +228,50 @@ def replace_oor_neighbor_mean(X: np.ndarray, min_val:Union[float,int]=0, max_val
     neighbor_means = generic_filter(X, lambda values: _mean_filter(values, min_val, max_val), size=3, mode='constant', cval=0)
 
     X[np.logical_or(X < min_val, X > max_val)] = neighbor_means[np.logical_or(X < min_val, X > max_val)]
+
+    return X
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+def data_fix(X: np.ndarray,
+             placeholders: List[Union[int, float]],
+             default_value: Union[int, float],
+             value_range_min: Union[int, float],
+             value_range_max: Union[int, float],
+             scaler: Scaler = None) -> np.ndarray:
+    """
+    Cleans and prepares input data by addressing NaN values, placeholder values,
+    out-of-range values. Optionally followed by scaling the data. This function handles both 
+    training and inference data cleaning and scaling.
+
+    Steps performed:
+    1. Replaces NaN values in the input data with a specified default value.
+    2. Replaces placeholder values in the input data.
+    3. Replaces out-of-range values using a mean approach.
+    4. Optionally Scales the input data using a Scaler.
+
+    Parameters:
+        X (np.ndarray): The input data to be cleaned and prepared (either for training or inference).
+        placeholders (List[Union[int, float]]): List of placeholder values to be replaced.
+        default_value (Union[int, float]): The value to replace NaNs with.
+        value_range_min (Union[int, float]): The minimum allowable value for the input data.
+        value_range_max (Union[int, float]): The maximum allowable value for the input data.
+        scaler (Scaler, optional): The scaler to use for transformation. Default None.
+
+    Returns:
+        X(np.ndarray): The cleaned and scaled input data.
+
+    """
+    X = X.copy()
+    # Nan Values
+    X = replace_nan_values(X, default_value)
+    # Placeholder Values
+    X = replace_placeholder_values(X, placeholders)
+    # Out of Range
+    X = replace_oor_mean(X, value_range_min, value_range_max)
+    # Scale the data
+    if scaler is not None:
+        X = scaler.transform(X)
 
     return X
 

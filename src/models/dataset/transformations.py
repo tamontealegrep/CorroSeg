@@ -368,7 +368,7 @@ def random_transformation(X,y,gaussian_alpha,salt_pepper_prob,salt_value,pepper_
         (lambda X, y: gaussian_noise(X, y, gaussian_alpha), 0.25),
         (lambda X, y: salt_and_pepper_noise(X, y, salt_pepper_prob, salt_pepper_prob, salt_value, pepper_value), 0.25),
         (lambda X, y: cutout(X, y, cutout_min, cutout_max), 0.25),
-        (lambda X, y: resize_and_pad(X, y, resize_min, resize_max), 0.25),
+        (lambda X, y: resize_and_pad(X, y, resize_min, resize_max), 0),
         (lambda X, y: rotate_and_pad(X, y, rotation_min, rotation_max), 0.25),
     ]
 
