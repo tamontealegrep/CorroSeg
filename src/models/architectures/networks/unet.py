@@ -10,7 +10,6 @@ from src.models.architectures.components.unet_encoder import UnetEncoder
 from src.models.architectures.components.unet_bottleneck import UnetBottleneck
 from src.models.architectures.components.unet_decoder import UnetDecoder
 from src.models.architectures.components.unet_skip_connections import UnetSkipConnections
-from src.models.architectures.activations.tanh_normalized import tanh_normalized
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -103,8 +102,6 @@ class Unet(Network):
         x = self.decoder(x, skip_connections)
         # Final convolution
         x = self.final_conv(x)
-        
-        x = tanh_normalized(x)
 
         return x
 
