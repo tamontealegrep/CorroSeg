@@ -7,11 +7,13 @@ from typing import List, Tuple, Union, Dict, Any
 from torchinfo import summary
 
 from src.models.architectures.networks import Network
-from src.data.expand import data_expand
+from src.data.expand import data_expand, array_expansion
+from src.data.reduct import array_reduction
 from src.data.split import data_split 
 from src.data.fix import data_fix
 from src.data.augment import cutmix_augment_data
 from src.data.slice import data_slice
+from src.data.reconstruct import data_reconstruct
 from src.data.scale import scaler_minmax, scaler_standar, scaler_robust
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,7 +137,7 @@ class ModelManager:
     def setup_data(self, X:np.ndarray, y:Union[np.ndarray,None]=None, height_stride:int=0, width_stride:int=0) -> Tuple[np.ndarray,np.ndarray]:
         height_stride = height_stride if height_stride > 0 else self.height
         width_stride = width_stride if width_stride > 0 else self.width
-        X, y = data_slice(X, y, self.height, height_stride, self.width, width_stride, self.default_value)
+        X, y = data_slice(X, y, self.height, height_stride, self.width, width_stride, self.default_value, True)
         X = np.array([self._preprocess_data(X[i]) for i in range(X.shape[0])])
         return X, y
     
@@ -152,6 +154,20 @@ class ModelManager:
 
     def predict(self, data:Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]) -> np.ndarray:
         return self.network.predict_model(data)
+    
+    def predict_well(self, X:np.ndarray, height_stride:int=0, width_stride:int=0, expand:bool=True) -> Tuple[np.ndarray,np.ndarray]:
+        height_stride = height_stride if height_stride > 0 else self.height
+        width_stride = width_stride if width_stride > 0 else self.width
+        if expand:
+            X = array_expansion(X)
+        height, width = X.shape
+        X, _ = self.setup_data(X, None, height_stride, width_stride)
+        X_dataset = self.build_dataset(X)
+        X_preds = self.predict(X_dataset)
+        X_output = data_reconstruct(X_preds,height,width,height_stride,width_stride,True)
+        if expand:
+            X_output = array_reduction(X_output)
+        return X_output
     
     def save_model(self, path:str) -> None:
         """
@@ -170,6 +186,5 @@ class ModelManager:
             path (str): The file path from where the model will be loaded.
         """
         self.network.load_state_dict(torch.load(path))
-        self.network.to(self.device)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
