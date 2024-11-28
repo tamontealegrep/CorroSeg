@@ -51,7 +51,6 @@ def predict_dataloader(model:nn.Module, dataloader:torch.utils.data.DataLoader):
     with torch.no_grad():
         for inputs, _ in dataloader:
             inputs = inputs.to(model.device)
-            inputs = inputs.unsqueeze(0) 
             output = model(inputs)
             output = output.squeeze().cpu().numpy()
             outputs.append(output)
