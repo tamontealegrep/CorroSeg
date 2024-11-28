@@ -120,7 +120,7 @@ def plot_predictions(model:nn.Module, dataset:torch.utils.data.Dataset, num_samp
             prediction_np = prediction.squeeze().cpu().numpy()
 
             # Handle label if it exists
-            if label is not None:
+            if label.nelement() != 0:
                 label_np = label.squeeze().cpu().numpy()
             else:
                 label_np = None 

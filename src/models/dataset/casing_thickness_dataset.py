@@ -40,9 +40,9 @@ class CasingThicknessDataset(Dataset):
         if self.transform:
             y = self.y[idx] if self.y is not None else np.zeros_like(X)
             X, y = self.transform(X, y, **self.kwargs)
-            y = torch.tensor(y, dtype=torch.float32).unsqueeze(0) if self.y is not None else None
+            y = torch.tensor(y, dtype=torch.float32).unsqueeze(0) if self.y is not None else torch.tensor([], dtype=torch.float32)
         else:
-            y = torch.tensor(self.y[idx], dtype=torch.float32).unsqueeze(0) if self.y is not None else None
+            y = torch.tensor(self.y[idx], dtype=torch.float32).unsqueeze(0) if self.y is not None else torch.tensor([], dtype=torch.float32)
 
         X = torch.tensor(X, dtype=torch.float32).unsqueeze(0)  # (h, w) -> (1, h, w)
 
