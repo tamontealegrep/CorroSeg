@@ -1,19 +1,20 @@
 
 import torch
 import torch.nn as nn
-from typing import Type, List, Tuple, Optional, Dict
+from typing import Type, Optional, Dict
+
+from . import Network
+
 from src.models import DEVICE 
 from src.models.architectures.components.unet_encoder import UnetEncoder
 from src.models.architectures.components.unet_bottleneck import UnetBottleneck
 from src.models.architectures.components.unet_decoder import UnetDecoder
 from src.models.architectures.components.unet_skip_connections import UnetSkipConnections
-
-from src.models.train.train import train_model as tm
-from src.models.train.train import train_validation_model as tvm
+from src.models.architectures.activations.tanh_normalized import tanh_normalized
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-class Unet(nn.Module):
+class Unet(Network):
     """
     U-Net architecture combining encoder, bottleneck, and decoder components.
 
@@ -103,12 +104,8 @@ class Unet(nn.Module):
         # Final convolution
         x = self.final_conv(x)
         
+        x = tanh_normalized(x)
+
         return x
-
-    def train_model(self,train_loader, criterion, optimizer, num_epochs=10):
-        tm(self,train_loader, criterion, optimizer, num_epochs)
-
-    def train_validate_model(self,train_loader, val_loader, criterion, optimizer, num_epochs=10):
-        tvm(self,train_loader, val_loader, criterion, optimizer, num_epochs)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

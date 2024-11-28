@@ -1,17 +1,18 @@
 
 import torch
 import torch.nn as nn
-from typing import Type, List, Tuple, Optional, Dict
+from typing import Type, Optional, Dict, Union
+
+from . import Network
+
 from src.models import DEVICE 
 from src.models.architectures.components.unet_encoder import UnetEncoder
 from src.models.architectures.components.unet_bottleneck import UnetBottleneck
 from src.models.architectures.components.unet_decoder_attention import UnetDecoderAttention
-from src.models.train.train import train_model as tm
-from src.models.train.train import train_validation_model as tvm
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-class UnetAttention(nn.Module):
+class UnetAttention(Network):
     """
     U-Net architecture combining encoder, bottleneck, and decoder components.
 
@@ -89,11 +90,5 @@ class UnetAttention(nn.Module):
         x = self.final_conv(x)
         
         return x
-
-    def train_model(self,train_loader, criterion, optimizer, num_epochs=10):
-        tm(self,train_loader, criterion, optimizer, num_epochs)
-
-    def train_validate_model(self,train_loader, val_loader, criterion, optimizer, num_epochs=10):
-        tvm(self,train_loader, val_loader, criterion, optimizer, num_epochs)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
