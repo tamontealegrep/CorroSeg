@@ -89,7 +89,7 @@ def data_split(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_size:int=3
     y_larger = []
 
     for i in range(len(larger_subset)):
-        X_larger_subset, y_larger_subset = vertical_slicing(larger_subset[i][0], larger_subset[i][1], width_size, width_stride ,padding_value)
+        X_larger_subset, y_larger_subset = vertical_slicing(larger_subset[i][0], larger_subset[i][1], width_size, width_stride , padding_value, False)
         X_larger += X_larger_subset
         y_larger += y_larger_subset
 
@@ -97,7 +97,7 @@ def data_split(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_size:int=3
     y_smaller = []
 
     for i in range(len(smaller_subset)):   
-        X_smaller_subset, y_smaller_subset = vertical_slicing(smaller_subset[i][0], smaller_subset[i][1], width_size, width_stride ,padding_value)
+        X_smaller_subset, y_smaller_subset = vertical_slicing(smaller_subset[i][0], smaller_subset[i][1], width_size, width_stride ,padding_value, False)
         X_smaller += X_smaller_subset
         y_smaller += y_smaller_subset
 
