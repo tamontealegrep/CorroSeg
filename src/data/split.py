@@ -71,7 +71,7 @@ def data_split(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_size:int=3
     y_data = []
 
     for id in X.keys():
-        X_slices, y_slices = horizontal_slicing(X[id], y[id], height_size, height_stride, padding_value)
+        X_slices, y_slices = horizontal_slicing(X[id], y[id], height_size, height_stride, padding_value, False)
         X_data += X_slices
         y_data += y_slices
 
