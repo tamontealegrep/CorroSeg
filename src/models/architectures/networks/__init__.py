@@ -2,14 +2,51 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Union
+from typing import Union, Tuple, List
 
 from src.models.operations.train import train
+from src.models.operations.evaluate import evaluate
 from src.models.operations.predict import predict
 
 #---------------------------------------------------------------------------------------------------
 
 class Network(nn.Module):
+    def __init__(self):
+        super(Network, self).__init__()
+        """
+        Base class for models.
+
+        Attributes:
+            config (dict): A dictionary that holds the model's configuration, including
+                   hyperparameters, and other model-specific parameters. This attribute is 
+                   initialized automatically and can be used to save or load the model configuration.
+            device (torch.device): The device to perform calculations on.
+            results (dict): Log of the results of the training and validation.
+
+        """
+        self.config = {}
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.results = {"train_loss": [], "val_loss": []}
+
+    def set_device(self, device_name: str = None) -> None:
+        """
+        Sets the device for the computations.
+        If no device name is provided, it will select the default device (cuda if available).
+
+        Args:
+            device_name (str, optional): The name of the device (e.g., "cuda" or "cpu").
+                                          If not provided, the default device will be used.
+        """
+        if device_name is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            if device_name.lower() == "cpu":
+                self.device = torch.device("cpu")
+            elif device_name.lower() == "cuda" and torch.cuda.is_available():
+                self.device = torch.device("cuda")
+            else:
+                raise ValueError(f"Invalid device '{device_name}'. Use 'cpu' or 'cuda'.")
+
     def train_model(self,
                     criterion:nn.Module,
                     optimizer:torch.optim.Optimizer,
@@ -26,8 +63,34 @@ class Network(nn.Module):
             val_loader (torch.utils.data.DataLoader, optional): DataLoader for the validation data. Default is None.
             num_epochs (int, optional): Number of epochs to train the model. Default is 10.
 
+        Returns:
+            None
         """
         train(self, criterion, optimizer, train_loader, val_loader, num_epochs)
+
+    def evaluate_model(self,
+                       data:Union[torch.utils.data.Dataset,torch.utils.data.DataLoader],
+                       criterion:nn.Module) -> Tuple[np.ndarray, List[float], float]:
+        """
+        Evaluate the model on the provided dataset or dataloader using the specified loss function.
+
+        This function evaluates the model in evaluation mode, making predictions, computing the loss for each sample, 
+        and returning:
+        - the predictions for each sample,
+        - the individual losses for each sample,
+        - and the total average loss.
+
+        Args:
+            data (Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]): The input data, either a Dataset or a DataLoader.
+            criterion (torch.nn.Module): The loss function used to compute the losses.
+
+        Returns:
+            tuple: A tuple containing:
+                outputs (numpy.ndarray): Predictions for each sample.
+                losses (list): List of individual losses for each sample.
+                average_loss (float): The average loss across the dataset or dataloader.
+        """
+        return evaluate(self, data, criterion)
 
     def predict_model(self,
                       data:Union[torch.utils.data.Dataset,torch.utils.data.DataLoader]) -> np.ndarray:
@@ -41,5 +104,41 @@ class Network(nn.Module):
             np.ndarray: An array of model predictions corresponding to the inputs in the data.
         """
         return predict(self, data)
+    
+    def save_model(self, path:str) -> None:
+        """
+        Save the model's state dictionary and configuration to a file.
+
+        This method saves the model's learned parameters (weights) and its configuration 
+        (hyperparameters and architecture details) to a specified file. This allows for 
+        reloading the model later with the same architecture and weights.
+
+        Args:
+            path (str): The path to the file where the model's state and configuration
+                            will be saved. The file will be saved in PyTorch's .pth format.
+        """
+        network_config = self.config
+        network_state_dict = self.state_dict()
+        network_results = self.results
+
+        torch.save({
+            "network_config": network_config,
+            "network_state_dict": network_state_dict,
+            "network_results": network_results,
+        }, path)
+
+    @staticmethod
+    def load_model(path:str) -> None:
+        """
+        Static method to load a model from a file. This method must be overridden by
+        subclasses to provide the specific loading mechanism for each model type.
+        
+        Args:
+            path (str): The path to the model file to load.
+        
+        Raises:
+            NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError("The 'load_model' staticmethod must be implemented in the subclass.")
     
 #---------------------------------------------------------------------------------------------------
