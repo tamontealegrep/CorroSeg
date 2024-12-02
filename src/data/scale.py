@@ -31,6 +31,14 @@ class Scaler:
         """Transform the scaled data back to the original representation."""
         raise NotImplementedError("This method should be overridden by subclasses.")
 
+    def state_dict(self):
+        """Return an object state"""
+        raise NotImplementedError("This method should be overridden by subclasses.")
+
+    def load_state_dict(self, state_dict):
+        """Restore the state of the object using a dictionary"""
+        raise NotImplementedError("This method should be overridden by subclasses.")
+    
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 class MinMaxScaler(Scaler):
@@ -67,6 +75,18 @@ class MinMaxScaler(Scaler):
     def inverse_transform(self, X):
         return (X - self.feature_range[0]) / (self.feature_range[1] - self.feature_range[0]) * (self.max - self.min) + self.min
     
+    def state_dict(self):
+        return {
+            "min":self.min,
+            "max":self.max,
+            "feature_range":self.feature_range
+            }
+    
+    def load_state_dict(self, state_dict):
+        self.min = state_dict["min"]
+        self.max = state_dict["max"]
+        self.feature_range = state_dict["feature_range"]
+
 class StandardScaler(Scaler):
     """
     A Standard scaler that standardizes features by removing the mean  and scaling to unit variance.
@@ -95,6 +115,16 @@ class StandardScaler(Scaler):
 
     def inverse_transform(self, X):
         return X * self.std + self.mean
+    
+    def state_dict(self):
+        return {
+            "mean":self.mean,
+            "std":self.std,
+            }
+    
+    def load_state_dict(self, state_dict):
+        self.mean = state_dict["mean"]
+        self.std = state_dict["std"]
     
 class RobustScaler(Scaler):
     """
@@ -126,6 +156,16 @@ class RobustScaler(Scaler):
 
     def inverse_transform(self, X):
         return X * self.iqr + self.median
+    
+    def state_dict(self):
+        return {
+            "median":self.median,
+            "iqr":self.iqr,
+            }
+    
+    def load_state_dict(self, state_dict):
+        self.median = state_dict["median"]
+        self.iqr = state_dict["iqr"]
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
