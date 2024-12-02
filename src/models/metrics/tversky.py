@@ -41,9 +41,6 @@ class TverskyLoss(nn.Module):
         self.smooth = smooth
 
     def forward(self, outputs:torch.Tensor, targets:torch.Tensor) -> float:
-        # Apply sigmoid to the outputs if necessary
-        outputs = torch.sigmoid(outputs)
-
         # Flatten the tensors
         outputs = outputs.view(-1)
         targets = targets.view(-1)
