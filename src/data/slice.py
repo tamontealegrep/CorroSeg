@@ -9,7 +9,8 @@ def horizontal_slicing(X: np.ndarray,
                        y: np.ndarray,
                        section_size: int = 36,
                        stride: int = 36,
-                       padding_value: Union[int,float] = 0) -> Tuple[list, list]:
+                       padding_value: Union[int,float] = 0,
+                       allow_duplicates: bool = True) -> Tuple[list, list]:
     """
     Slice the input arrays horizontally into smaller sections with padding.
 
@@ -24,6 +25,7 @@ def horizontal_slicing(X: np.ndarray,
         section_size (int, optional): The height of each section to be sliced. Default is 36.
         stride (int, optional): The number of rows to move forward for the next slice. Default is 36.
         padding_value (float, optional): The value to use for padding. Default is 0. To use NaN for padding, set this argument to `np.nan`.
+        allow_duplicates (bool, optional): Whether to allow duplicate sections. Default is True.
 
     Returns:
         tuple: A tuple containing:
@@ -58,6 +60,9 @@ def horizontal_slicing(X: np.ndarray,
         X_section = X_padded[start:start + section_size, :]
         y_section = y_padded[start:start + section_size, :]
 
+        if not allow_duplicates and X_sections and np.array_equal(X_sections[0], X_section):
+            break
+
         X_sections.append(X_section)
         y_sections.append(y_section)
 
@@ -67,7 +72,7 @@ def vertical_slicing(X: np.ndarray,
                      y: np.ndarray,
                      section_size: int = 36,
                      stride: int = 36,
-                     padding_value: float = 0,
+                     padding_value: Union[int,float] = 0,
                      allow_duplicates: bool = True) -> Tuple[list, list]:
     """
     Slice the input arrays vertically into smaller sections with padding.
