@@ -1,45 +1,78 @@
 folders:
-  data_folder: "./data"
-  save_folder: "./data/processed"
+  train: "./data/restored/train/"
+  test: "./data/restored/test/"
+  model: "./model/"
 
-setup:
-  num_channels: 1
-  height_size: 360 # Height of the sections
-  width_size: 36 # Width of the sections
+networks:
+  unet:
+    input_channels: 1
+    output_channels: 1
+    base_channels: 6
+    num_layers: 2
+    encoder_block_type: "RRConvBlock"
+    bottleneck_block_type: "RRConvBlock"
+    decoder_block_type: "RRConvBlock"
+    skip_connections_block_type: "RRConvBlock"
+    encoder_kwargs:
+      activation: "LeakyReLU"
+      dropout_prob: 0.2
+      num_recurrences: 1
+      cbam: True
+      cbam_reduction: 8
+      cbam_activation: "LeakyReLU"
+    bottleneck_kwargs:
+      activation: "LeakyReLU"
+      dropout_prob: 0.2
+      num_recurrences: 2
+      cbam: True
+      cbam_reduction: 8
+      cbam_activation: "LeakyReLU"
+    decoder_kwargs:
+      activation: "LeakyReLU"
+      dropout_prob: 0.2
+      num_recurrences: 1
+      cbam: True
+      cbam_reduction: 8
+      cbam_activation: "LeakyReLU"
+    skip_connections_kwargs:
+      activation: "LeakyReLU"
+      dropout_prob: 0.2
+      num_recurrences: 2
+      cbam: True
+      cbam_reduction: 8
+      cbam_activation: "LeakyReLU"
+    attention_gates: True
+    output_activation: "sigmoid"
+
+manager:
+  dataset_class: "CasingThicknessDataset"
+  loss_class: "IoULoss"
+  optimizer_class: "Adam"
+  scaler_type: "robust"
+  input_shape:
+  - 1 # Number of channels
+  - 360 # Height of the sections
+  - 36 # Width of the sections
+  placeholders:
+  - -999.25
+  - -999.0
+  value_range:
+  - -0.2
+  - 0.2
+  default_value: 0
+  loss_params:
+  optimizer_params:
+    lr: 0.001
+    weight_decay: 0.0001
+  scaler_params:
+
+train_validation:
   height_stride: 360
   width_stride: 18
-  default_value: 0
-  validation_fraction: 0.2
-  split_seed: 42
-  placeholders: [-999.25, -999.0]
-  range_min: -0.2
-  range_max: 0.2
-  augmented_ratio: 0.5
+  fraction: 0.2
+  seed: 42
   expand: True
-
-columns:  
-  test:
-    1: 1
-    2: 1
-    3: 1
-    4: 1
-    5: 1
-  train: 
-    1: 2
-    2: 2
-    3: 1
-    4: 1
-    5: 2
-    6: 2
-    7: 2
-    8: 2
-    9: 2
-    10: 2
-    11: 1
-    12: 1
-    13: 1
-    14: 1
-    15: 1
+  augmented_ratio: 0.5
 
 random_transformation:
   gaussian_alpha: 0.2
@@ -52,3 +85,11 @@ random_transformation:
   resize_max: 1.2
   rotation_min: -30
   rotation_max: 30
+
+predict:
+  height_stride: 18
+  width_stride: 18
+  batch_size: 64
+  expand: True
+
+threshold: 0.5

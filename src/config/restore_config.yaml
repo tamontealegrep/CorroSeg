@@ -1,0 +1,38 @@
+folders:
+  data_folder: "./data/"
+  raw_folder: "./data/raw/"
+  restored_folder: "./data/restored/"
+
+raw_data:
+  train_folder: "./data/raw/X_train/images/"
+  test_folder: "./data/raw/X_test/images/"
+  train_file: "./data/raw/y_train.csv"
+
+well_columns:  
+  test:
+    1: 1
+    2: 1
+    3: 1
+    4: 1
+    5: 1
+
+  train: 
+    1: 2
+    2: 2
+    3: 1
+    4: 1
+    5: 2
+    6: 2
+    7: 2
+    8: 2
+    9: 2
+    10: 2
+    11: 1
+    12: 1
+    13: 1
+    14: 1
+    15: 1
+
+save_folders:
+  train: "./data/restored/train/"
+  test: "./data/restored/test/"
