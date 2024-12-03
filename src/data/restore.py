@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 from typing import Any, List, Dict, Tuple, Optional, Union
-from src.data.expand import expand_multiple
 from src.utils.files import save_dict_arrays
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -176,7 +175,7 @@ def reconstruct_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]], colum
 
     return reconstructed_data
 
-def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, save_path:str=None) -> Tuple[Dict[Any, np.ndarray], Dict[Any,np.ndarray]]:
+def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, save_path:str) -> None:
     """
     Load and reconstruct data arrays from patch files.
 
@@ -188,12 +187,7 @@ def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dic
         X_folder_path (str): Path to the folder containing the X patch files.
         y_file_path (str): Path to the file containing the y patches. Can be None if (y) does not exist.
         column_config (dict): Configuration that defines how the data should be reconstructed.
-        save_path (str, optional): Path where the unexpanded arrays will be saved. If None, the arrays are not saved.
-
-    Returns:
-        tuple: A tuple containing:
-            X (dict): Dictionary (ID: numpy.ndarray) of reconstructed array of features.
-            y (dict): Dictionary (ID: numpy.ndarray) of reconstructed array of labels.
+        save_path (str): Path where the unexpanded arrays will be saved.
 
     Raises:
         FileNotFoundError: If the provided paths do not exist.
@@ -204,9 +198,6 @@ def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dic
     X = reconstruct_multiple(X_patches,column_config)
     y = reconstruct_multiple(y_patches,column_config)
 
-    if save_path is not None:
-        save_dict_arrays(save_path, X, y)
-
-    return X, y
+    save_dict_arrays(save_path, X, y)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
