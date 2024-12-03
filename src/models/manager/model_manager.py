@@ -7,6 +7,9 @@ from typing import List, Tuple, Union, Dict, Any
 from torchinfo import summary
 
 from src.models.architectures.networks import Network
+from src.models.dataset import *
+from src.models.metrics import *
+
 from src.data.expand import data_expand, array_expansion
 from src.data.reduct import array_reduction
 from src.data.split import data_split 
@@ -43,7 +46,7 @@ class ModelManager():
         config (dict): A dictionary containing the configuration parameters for the model, dataset, optimizer, loss function, and scaler.
         network (torch.nn.Module): The PyTorch model to be trained or evaluated.
         dataset_class (torch.utils.data.Dataset): The PyTorch dataset used in the data.
-        loss_fn (torch.nn.Module): The loss function used during training.
+        loss_class (torch.nn.Module): The loss function used during training.
         loss_params (dict): A dictionary containing parameters for the loss function.
         optimizer (torch.optim.Optimizer): The optimizer used for training the model.
         optimizer_params (dict): A dictionary containing parameters for the optimizer.
@@ -63,22 +66,22 @@ class ModelManager():
     def __init__(self,
                  network:Network,
                  dataset_class:torch.utils.data.Dataset,
-                 loss_fn:nn.Module,
+                 loss_class:nn.Module,
                  optimizer_class:torch.optim.Optimizer,
                  scaler_type: str,
                  input_shape: Tuple[int,int,int],
                  placeholders: List[Union[int, float]],
                  value_range:Tuple[Union[int, float]],
                  default_value: Union[int, float],
-                 loss_params: dict = {},
-                 optimizer_params: dict = {},
-                 scaler_params: dict = {},
+                 loss_params: dict = None,
+                 optimizer_params: dict = None,
+                 scaler_params: dict = None,
                  ):
         # Save config
         self.config = {
             "network_class":network.__class__.__name__,
             "dataset_class":dataset_class.__name__,
-            "loss_fn": loss_fn.__name__,
+            "loss_class": loss_class.__name__,
             "optimizer_class": optimizer_class.__name__,
             "scaler_type": scaler_type,
             "input_shape": input_shape,
@@ -89,10 +92,14 @@ class ModelManager():
             "optimizer_params": optimizer_params or {},
             "scaler_params": scaler_params or {},
         }
+        # Initialize kwargs if not provided
+        loss_params = loss_params or {}
+        optimizer_params = optimizer_params or {}
+        scaler_params = scaler_params or {}
 
         self.network = network
         self.dataset_class = dataset_class
-        self.loss_fn = loss_fn(**loss_params)
+        self.loss_class = loss_class(**loss_params)
         self.optimizer:torch.optim.Optimizer = optimizer_class(self.network.parameters(), **optimizer_params)
         
 
@@ -299,7 +306,7 @@ class ModelManager():
             val_loader (Union[torch.utils.data.DataLoader, None], optional): The DataLoader for validation data. Default is None.
             num_epochs (int, optional): The number of epochs to train the model. Default is 50.
         """
-        self.network.train_model(self.loss_fn, self.optimizer, train_loader, val_loader, num_epochs)
+        self.network.train_model(self.loss_class, self.optimizer, train_loader, val_loader, num_epochs)
 
     def evaluate(self, data:Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]) -> Tuple[np.ndarray, List[float], float]:
         """
@@ -311,7 +318,7 @@ class ModelManager():
         Returns:
             Tuple[np.ndarray, List[float], float]: The evaluation results, including predictions, loss, and average loss.
         """
-        return self.network.evaluate_model(data, self.loss_fn)
+        return self.network.evaluate_model(data, self.loss_class)
         
     def predict(self, data:Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]) -> np.ndarray:
         """
@@ -387,7 +394,7 @@ class ModelManager():
             raise ValueError(f"Shape mismatch: the shape of y_pred ({y_pred.shape}) does not match the shape of y ({y.shape}).")
         y_pred = torch.tensor(y_pred, dtype=torch.float32)
         y = torch.tensor(y, dtype=torch.float32)
-        loss = self.loss_fn(y_pred, y).item()
+        loss = self.loss_class(y_pred, y).item()
         return loss
 
     def save_model(self, path:str) -> None:
@@ -421,25 +428,39 @@ class ModelManager():
 
         network = network_class.load_model(path)
 
-        model = ModelManager(
-            network = network,
-            dataset_class = eval(hyperparams_config["dataset_class"]),
-            loss_fn = eval(hyperparams_config["loss_fn"]),
-            optimizer_class = eval(f"torch.optim.{hyperparams_config["optimizer_class"]}"),
-            scaler_type = hyperparams_config["scaler_type"],
-            input_shape = hyperparams_config["input_shape"],
-            placeholders = hyperparams_config["placeholders"],
-            value_range = hyperparams_config["value_range"],
-            default_value = hyperparams_config["default_value"],
-            loss_params = hyperparams_config["loss_params"],
-            optimizer_params = hyperparams_config["optimizer_params"],
-            scaler_params = hyperparams_config["scaler_params"],
-        )
+        model = ModelManager.from_dict(network, hyperparams_config)
 
         model.optimizer.load_state_dict(optimizer_state_dict)
         model.fit_scaler(np.zeros((10, 10)))
         model.scaler.load_state_dict(scaler_state_dict)
 
         return model
+    
+    @staticmethod
+    def from_dict(network:Network, config_dict:dict):
+        """
+        Creates a ModelManager instance from the provided network and configuration dictionary.
+
+        Args:
+            network (Network): A PyTorch network.
+            config_dict (dict): A dictionary containing the model's configuration.
+
+        Returns:
+            ModelManager : An instance of the ModelManager constructed from the dictionary.
+        """
+        return ModelManager(
+            network = network,
+            dataset_class = eval(config_dict["dataset_class"]),
+            loss_class = eval(config_dict["loss_class"]),
+            optimizer_class = eval(f"torch.optim.{config_dict["optimizer_class"]}"),
+            scaler_type = config_dict["scaler_type"],
+            input_shape = config_dict["input_shape"],
+            placeholders = config_dict["placeholders"],
+            value_range = config_dict["value_range"],
+            default_value = config_dict["default_value"],
+            loss_params = config_dict["loss_params"],
+            optimizer_params = config_dict["optimizer_params"],
+            scaler_params = config_dict["scaler_params"],
+        )
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
