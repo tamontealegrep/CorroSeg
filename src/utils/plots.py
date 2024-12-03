@@ -7,7 +7,15 @@ from typing import Tuple, Union, Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def plot_data(X: np.ndarray, y: np.ndarray = None, z: np.ndarray = None, X_range: tuple = (-0.2, 0.2), y_range: tuple = (0, 1), figsize: tuple = (5, 5)):
+def plot_data(X: np.ndarray,
+              y: np.ndarray = None,
+              z: np.ndarray = None,
+              X_range: tuple = (-0.2, 0.2),
+              y_range: tuple = (0, 1),
+              X_cmap: str = "gray",
+              y_cmap: str = "viridis",
+              vertical_range: tuple = None,
+              figsize: tuple = (5, 5)):
     """
     Visualize X (features), y (mask), and optionally z (predictions) side by side.
 
@@ -15,9 +23,12 @@ def plot_data(X: np.ndarray, y: np.ndarray = None, z: np.ndarray = None, X_range
         X (numpy.ndarray): Features 2D array.
         y (numpy.ndarray, optional): Target 2D array. If None, only X will be visualized.
         z (numpy.ndarray, optional): Predictions 2D array. If None, only X and y (if provided) will be visualized.
-        X_range (tuple): The (min, max) range for the X image color scale.
-        y_range (tuple): The (min, max) range for the Y image color scale.
-        figsize (tuple): Size of the subplots.
+        X_range (tuple, optional): The (min, max) range for the X color scale. Default: (-0.2, 0.2)
+        y_range (tuple, optional): The (min, max) range for the Y color scale. Default: (0, 1)
+        X_cmap (str, optional): Colormap name for X. Default "gray".
+        y_cmap (str, optional): Colormap name for y, and z. Default "viridis".
+        vertical_range (tuple, optional): A tuple (start, end) to slice the image vertically. Deafult: None.
+        figsize (tuple, optional): Size of the subplots.
 
     Returns:
         None: Displays the plot of the images side by side.
@@ -36,28 +47,43 @@ def plot_data(X: np.ndarray, y: np.ndarray = None, z: np.ndarray = None, X_range
     if num_images == 1:
         axes = [axes]
 
+    # If vertical_range is specified, slice the images vertically
+    if vertical_range is not None:
+        X = X[vertical_range[0]:vertical_range[1]]
+        if y is not None:
+            y = y[vertical_range[0]:vertical_range[1]]
+        if z is not None:
+            z = z[vertical_range[0]:vertical_range[1]]
+
     # Plot the primary image (X)
-    axes[0].imshow(X, vmin=X_range[0], vmax=X_range[1], cmap="gray")
-    axes[0].set_title("Input Image")
+    axes[0].imshow(X, vmin=X_range[0], vmax=X_range[1], cmap=X_cmap)
+    axes[0].set_title("Input")
     axes[0].axis("off")
 
     # Plot the secondary image (y) if available
     if y is not None:
-        axes[1].imshow(y, vmin=y_range[0], vmax=y_range[1], cmap="viridis")
-        axes[1].set_title("Mask Image")
+        axes[1].imshow(y, vmin=y_range[0], vmax=y_range[1], cmap=y_cmap)
+        axes[1].set_title("Mask")
         axes[1].axis("off")
 
     # Plot the prediction image (z) if available
     if z is not None:
-        axes[-1].imshow(z, vmin=y_range[0], vmax=y_range[1], cmap="viridis")
-        axes[-1].set_title("Prediction Image")
+        axes[-1].imshow(z, vmin=y_range[0], vmax=y_range[1], cmap=y_cmap)
+        axes[-1].set_title("Prediction")
         axes[-1].axis("off")
 
     # Show the plot
     plt.tight_layout()
     plt.show()
 
-def plot_sample(X, y, X_range=(-1, 1), y_range=(0, 1), sample_id=None, figsize=(10, 10)):
+def plot_sample(X: np.ndarray,
+                y: np.ndarray,
+                X_range=(-1, 1),
+                y_range=(0, 1),
+                X_cmap: str = "gray",
+                y_cmap: str = "viridis",
+                sample_id=None,
+                figsize=(10, 10)):
     """
     Plot a sample image and its corresponding mask.
 
@@ -66,6 +92,8 @@ def plot_sample(X, y, X_range=(-1, 1), y_range=(0, 1), sample_id=None, figsize=(
         y (numpy.ndarray): Array of masks with shape (n_samples, h, w).
         X_range (tuple, optional): Tuple with the min and max values for the Img display.
         y_range (tuple, optional): Tuple with the min and max values for the Mask display.
+        X_cmap (str, optional): Colormap name for X. Default "gray".
+        y_cmap (str, optional): Colormap name for y, and z. Default "viridis".
         sample_id (int, optional): Index of the sample to plot. If None, a random sample will be selected.
         figsize (tuple, optional): Size of the figure for the plot.
     """
@@ -80,80 +108,16 @@ def plot_sample(X, y, X_range=(-1, 1), y_range=(0, 1), sample_id=None, figsize=(
     fig, axes = plt.subplots(1, 2, figsize=figsize)
     
     # Plot image
-    axes[0].imshow(plot_img, vmin=X_range[0], vmax=X_range[1], cmap="gray")
+    axes[0].imshow(plot_img, vmin=X_range[0], vmax=X_range[1], cmap=X_cmap)
     axes[0].set_title(f"Image (ID: {sample_id})")
     axes[0].axis("off")
     
     # Plot mask
-    axes[1].imshow(plot_msk, vmin=y_range[0], vmax=y_range[1])
+    axes[1].imshow(plot_msk, vmin=y_range[0], vmax=y_range[1], cmap=y_cmap)
     axes[1].set_title("Mask")
     axes[1].axis("off")
 
     plt.tight_layout()
     plt.show()
-
-def plot_predictions(model:nn.Module, dataset:torch.utils.data.Dataset, num_samples:int=5, id:Optional[Union[int,list]]=None, X_range:Tuple=(-1, 1), y_range:Tuple=(0, 1), figsize:Tuple=(5, 5)):
-    """
-    Plot original images, true labels, and model predictions.
-
-    Args:
-        model (torch.nn.Module): The model used for predictions.
-        dataset (torch.utils.data.Dataset): The dataset containing images and labels.
-        num_samples (int, optional): Number of samples to plot. Default is 5.
-        id (None, int, or list, optional): Specific indices to plot. Default is None, which generates random indices.
-        X_range (tuple, optional): Tuple with the min and max values for the Img display.
-        y_range (tuple, optional): Tuple with the min and max values for the Mask display.
-        
-    """
-    model.eval()  # Set the model to evaluation mode
-
-    if id is None:
-        indices = np.random.choice(len(dataset), num_samples, replace=False)
-    elif isinstance(id, int):
-        indices = [id] if id < len(dataset) else []
-    else:
-        indices = [i for i in id if i < len(dataset)]
-
-    with torch.no_grad():
-        for i in indices:
-            # Get the image and label
-            image, label = dataset[i]
-            image = image.unsqueeze(0)  # Add batch dimension if necessary
-
-            # Move image to the same device as the model
-            image = image.to(next(model.parameters()).device)
-
-            # Get model prediction
-            prediction = model(image)
-
-            # Convert tensors to numpy for plotting
-            image_np = image.squeeze().cpu().numpy()
-            prediction_np = prediction.squeeze().cpu().numpy()
-
-            # Handle label if it exists
-            if label.nelement() != 0:
-                label_np = label.squeeze().cpu().numpy()
-            else:
-                label_np = None 
-
-            # Plot
-            plt.figure(figsize=figsize)
-            plt.subplot(1, 3, 1)
-            plt.title(f'Image {i}')
-            plt.imshow(image_np, vmin=X_range[0], vmax=X_range[1], cmap='gray')
-            plt.axis('off')
-
-            if label_np is not None:
-                plt.subplot(1, 3, 2)
-                plt.title('True Label')
-                plt.imshow(label_np, vmin=y_range[0], vmax=y_range[1])
-                plt.axis('off')
-
-            plt.subplot(1, 3, 3) if label_np is not None else plt.subplot(1, 3, 2)
-            plt.title('Prediction')
-            plt.imshow(prediction_np, vmin=y_range[0], vmax=y_range[1])
-            plt.axis('off')
-
-            plt.show()
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
