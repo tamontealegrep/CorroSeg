@@ -1,14 +1,18 @@
 
 import math
 import numpy as np
-from typing import Tuple
+from typing import Optional, Tuple 
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def data_reconstruct(X: np.ndarray,
-                     height: int, width: int,
-                     height_stride: int, width_stride: int, 
-                     average: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def data_reconstruct(
+        X: np.ndarray,
+        height: int,
+        width: int,
+        height_stride: int,
+        width_stride: int, 
+        average: Optional[bool] = False,
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Reconstructs a larger 2D array from smaller patches.
 
@@ -24,8 +28,7 @@ def data_reconstruct(X: np.ndarray,
         height_stride (int): The stride (step size) in the height direction during the patch placement.
         width_stride (int): The stride (step size) in the width direction during the patch placement.
         average (bool, optional): A flag to indicate whether to average overlapping patches. 
-                                  If True, the sum of overlapping patches will be divided 
-                                  by the number of overlapping patches. Default is False.
+            If True, the sum of overlapping patches will be divided by the number of overlapping patches. Default is False.
 
     Returns:
         X_output (np.ndarray): The reconstructed data, with shape (height, width).

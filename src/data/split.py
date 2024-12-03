@@ -1,11 +1,15 @@
 
 import numpy as np
 from src.data.slice import horizontal_slicing, vertical_slicing
-from typing import Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple, Dict
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def split_list(data: List, fraction: float = 0.2, seed: int = None) -> Tuple[List, List]:
+def split_list(
+        data: List,
+        fraction: Optional[float] = 0.2,
+        seed: Optional[int] = None,
+        ) -> Tuple[List, List]:
     """
     Split a list into two subsets: a larger subset and a smaller subset.
 
@@ -22,9 +26,15 @@ def split_list(data: List, fraction: float = 0.2, seed: int = None) -> Tuple[Lis
         tuple: A tuple containing:
             larger_subset (list): The larger subset of the data.
             smaller_subset (list): The smaller subset of the data.
+
+    Raises:
+        ValueError: If fraction is not between 0 and 1.
     """
     if seed is not None:
         np.random.seed(seed)
+
+    if not (0 <= fraction <= 1):
+        raise ValueError("fraction must be a value between 0 and 1.")
 
     num_samples = len(data)
     split_index = int(num_samples * (1 - fraction))
@@ -38,7 +48,17 @@ def split_list(data: List, fraction: float = 0.2, seed: int = None) -> Tuple[Lis
 
     return larger_subset, smaller_subset
 
-def data_split(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_size:int=360, height_stride:int=360, width_size:int=36, width_stride:int=18, padding_value:int=0, fraction:float=0.2, seed:int = None) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+def data_split(
+        X: Dict[Any,np.ndarray],
+        y: Dict[Any,np.ndarray],
+        height_size: Optional[int] = 360,
+        height_stride: Optional[int] = 360,
+        width_size: Optional[int] = 36,
+        width_stride: Optional[int] = 18,
+        padding_value: Optional[int] = 0,
+        fraction: Optional[float] = 0.2,
+        seed: Optional[int] = None,
+        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split data into larger and smaller subsets from dictionaries of arrays.
 
@@ -66,6 +86,7 @@ def data_split(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_size:int=3
 
     Raises:
         ValueError: If the lengths of X and y do not match or if an error occurs during slicing.
+        ValueError: If fraction is not between 0 and 1.
     """
     X_data = []
     y_data = []

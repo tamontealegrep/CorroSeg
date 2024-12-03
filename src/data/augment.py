@@ -4,21 +4,26 @@ from typing import Tuple
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def v_cutmix(array_1:np.ndarray, array_2:np.ndarray, alpha:float) -> np.ndarray:
+def v_cutmix(
+        array_1:np.ndarray,
+        array_2:np.ndarray,
+        alpha:float,
+        ) -> np.ndarray:
     """
-    Perform Vertical CutMix data augmentation by mixing two arrays based on a given alpha value.
+    Perform Vertical CutMix data augmentation by mixing two arrays.
     
-    Args:
-        array_1 (np.ndarray): The first array of shape (H, W) or (H, W, C).
+    Parameters:
+        array_1 (np.ndarray): The first array of shape (h, w).
         array_2 (np.ndarray): The second array of the same shape as array_1.
         alpha (float): A value between 0 and 1 that determines the proportion of the first image to use.
     
     Returns:
         output_array (np.ndarray): A new array that is a combination of array_1 and array_2, 
-                    with the upper portion taken from array_1 and the rest from array_2.
+            with the upper portion taken from array_1 and the rest from array_2.
     
     Raises:
-        ValueError: If array_1 and array_2 do not have the same shape or if alpha is not between 0 and 1.
+        ValueError: If array_1 and array_2 do not have the same shape.
+        ValueError: If alpha is not between 0 and 1.
     """
     if array_1.shape != array_2.shape:
         raise ValueError("Input arrays must have the same shape.")
@@ -34,21 +39,26 @@ def v_cutmix(array_1:np.ndarray, array_2:np.ndarray, alpha:float) -> np.ndarray:
     
     return output_array
 
-def h_cutmix(array_1:np.ndarray, array_2:np.ndarray, alpha:float) -> np.ndarray:
+def h_cutmix(
+        array_1:np.ndarray,
+        array_2:np.ndarray,
+        alpha:float,
+        ) -> np.ndarray:
     """
-    Perform Horizontal CutMix data augmentation by mixing two arrays based on a given alpha value.
+    Perform Horizontal CutMix data augmentation by mixing two arrays.
     
-    Args:
-        array_1 (np.ndarray): The first array of shape (H, W).
+    Parameters:
+        array_1 (np.ndarray): The first array of shape (h, w).
         array_2 (np.ndarray): The second array of the same shape as array_1.
         alpha (float): A value between 0 and 1 that determines the proportion of the first image to use.
     
     Returns:
         output_array (np.ndarray): A new array that is a combination of array_1 and array_2, 
-                    with the left portion taken from array_1 and the rest from array_2.
+            with the left portion taken from array_1 and the rest from array_2.
     
     Raises:
-        ValueError: If array_1 and array_2 do not have the same shape or if alpha is not between 0 and 1.
+        ValueError: If array_1 and array_2 do not have the same shape.
+        ValueError: If alpha is not between 0 and 1.
     """
     if array_1.shape != array_2.shape:
         raise ValueError("Input arrays must have the same shape.")
@@ -64,11 +74,15 @@ def h_cutmix(array_1:np.ndarray, array_2:np.ndarray, alpha:float) -> np.ndarray:
     
     return output_array
 
-def cutmix_augment_data(X:np.ndarray, y:np.ndarray, num_samples:int) -> Tuple[np.ndarray,np.ndarray]:
+def cutmix_augment_data(
+        X:np.ndarray,
+        y:np.ndarray,
+        num_samples:int,
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Augment data using random horizontal and vertical CutMix techniques.
     
-    Args:
+    Parameters:
         X (np.ndarray): Input array of shape (n_samples, h, w).
         y (np.ndarray): Target array of shape (n_samples, h, w).
         num_samples (int): The number of augmented samples to generate.
@@ -78,7 +92,8 @@ def cutmix_augment_data(X:np.ndarray, y:np.ndarray, num_samples:int) -> Tuple[np
         y_augmented (np.ndarray): Array containing the augmented target samples.
     
     Raises:
-        ValueError: If X and y do not have the same first dimension or if num_samples is non-positive.
+        ValueError: If X and y do not have the same first dimension.
+        ValueError: If num_samples is non-positive.
     """
     if X.shape[0] != y.shape[0]:
         raise ValueError("Input arrays X and y must have the same number of samples.")

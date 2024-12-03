@@ -1,19 +1,18 @@
 
 import numpy as np
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, Optional, Any, Tuple
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def array_expansion(array:np.ndarray) -> np.ndarray:
+def array_expansion(array: np.ndarray) -> np.ndarray:
     """
-    Expand an array by rearranging its columns.
+    Expand an array of shape (h, w) by rearranging its columns for data continuity.
 
     Parameters:
-        array (numpy.ndarray): A 2D numpy array to be expanded.
+        array (np.ndarray): A numpy array to be expanded.
 
     Returns:
-        numpy.ndarray: A 2D numpy array representing the expanded array.
-    
+        output_array (np.ndarray): An array representing the expanded array.
     """
     mid = array.shape[1] // 2
 
@@ -24,16 +23,15 @@ def array_expansion(array:np.ndarray) -> np.ndarray:
     
     return output_array
 
-def expand_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]]) -> Dict[Any, Optional[np.ndarray]]:
+def expand_multiple(data_dict: Dict[Any, np.ndarray]) -> Dict[Any, np.ndarray]:
     """
     Expand multiple arrays by rearranging its columns for data continuity.
 
     Parameters:
-        data_dict (dict): Dictionary (ID: list[np.ndarray]) of list of 2D numpy arrays.
+        data_dict (dict): Dictionary (ID: np.ndarray) of numpy arrays with shape (h, w).
 
     Returns:
-        expanded_data (dict): Dictionary (ID: expanded_array) of expanded arrays.
-        
+        expanded_data (dict): Dictionary (ID: np.ndarray) of expanded arrays. 
     """
     expanded_data = {}
 
@@ -45,26 +43,26 @@ def expand_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]]) -> Dict[An
 
     return expanded_data
 
-def data_expand(X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray]=None) -> Tuple[Dict[Any, np.ndarray], Dict[Any,np.ndarray]]:
+def data_expand(
+        X: Dict[Any,np.ndarray],
+        y: Dict[Any,np.ndarray] = None,
+        ) -> Tuple[Dict[Any, np.ndarray], Dict[Any,np.ndarray]]:
     """
-    Expand data arrays.
-
-    This function expands the data for cilindrical continuity.
+    Expand data arrays for cilindrical continuity.
 
     Parameters:
-        X (dict): Dictionary where each key corresponds to an ID and each value is a numpy.ndarray 
-                  representing a feature array that will be expanded.
-        y (dict): Dictionary where each key corresponds to an ID and each value is a numpy.ndarray 
-                  representing a label array that will be expanded. Can be None if no labels exist. Default None.
+        X (dict): Dictionary (ID: np.ndarray) representing a feature array that will be expanded.
+        y (dict): Dictionary (ID: np.ndarray) representing a targets array that will be expanded.
+            Can be None if no targets exist. Default None.
 
     Returns:
         tuple: A tuple containing:
-            X (dict): Dictionary (ID: numpy.ndarray) of expanded array of features.
-            y (dict): Dictionary (ID: numpy.ndarray) of expanded array of labels.
-
+            X (dict): Dictionary (ID: np.ndarray) of expanded array of features.
+            y (dict): Dictionary (ID: np.ndarray) of expanded array of targets.
     """
     X = expand_multiple(X)
     y = expand_multiple(y)
 
     return X, y
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

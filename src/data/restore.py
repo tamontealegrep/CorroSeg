@@ -7,7 +7,7 @@ from src.utils.files import save_dict_arrays
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def find_missing_keys(dictionary:dict) -> set:
+def find_missing_keys(dictionary: dict) -> set:
     """
     Check for missing keys in a sequence of numeric keys in a dictionary.
 
@@ -15,7 +15,8 @@ def find_missing_keys(dictionary:dict) -> set:
         dictionary (dict): A dictionary with numeric keys.
 
     Returns:
-        set: A set of missing keys in the sequence from the minimum to the maximum key. If there are no missing keys, an empty set is returned.
+        missing_keys (set): A set of missing keys in the sequence from the minimum to the maximum key.
+            If there are no missing keys, an empty set is returned.
     
     """
     keys = sorted(dictionary.keys())
@@ -30,18 +31,21 @@ def find_missing_keys(dictionary:dict) -> set:
     
     return missing_keys
 
-def load_npy_files(folder_path:str, prefix:str=None) -> List[np.ndarray]:
+def load_npy_files(
+        folder_path: str,
+        prefix: Optional[str] = None,
+        ) -> List[np.ndarray]:
     """
     Load .npy files from a specified folder, with an optional prefix filter.
+
+    If a prefix is provided and some IDs are missing, a warning will be printed with the missing IDs.
 
     Args:
         folder_path (str): The path to the folder containing .npy files.
         prefix (str, optional): A prefix to filter files. Only files starting with this prefix will be loaded. If None, all .npy files will be loaded.
-                                
-                                
+                                                            
     Returns:
-        list: A sorted list of loaded data arrays. If a prefix is provided and some IDs are missing, a warning will be printed with the missing IDs.
-    
+        files (List[np.ndarray]): A sorted list of loaded data arrays. 
     """
     files = {}
     for filename in os.listdir(folder_path):
@@ -62,7 +66,11 @@ def load_npy_files(folder_path:str, prefix:str=None) -> List[np.ndarray]:
 
     return files
 
-def load_csv_and_reshape(file_path:str, prefix:str=None, shape:Tuple[int,int]=(36, 36)) -> List[np.ndarray]:
+def load_csv_and_reshape(
+        file_path: str,
+        prefix: Optional[str] = None,
+        shape: Optional[Tuple[int,int]] = (36, 36),
+        ) -> List[np.ndarray]:
     """
     Load a CSV file and reshape each row into a specified 2D shape, optionally filtering by index prefix.
 
@@ -72,8 +80,7 @@ def load_csv_and_reshape(file_path:str, prefix:str=None, shape:Tuple[int,int]=(3
         shape (tuple, optional): The desired shape for reshaping each row .Default is (36, 36).
         
     Returns:
-        list: A sorted list of numpy.ndarray reshaped to the specified dimensions. 
-
+        data (List[np.ndarray]): A sorted list of numpy.ndarray reshaped to the specified dimensions. 
     """
     file = pd.read_csv(file_path, index_col=0)
     data = {}
@@ -97,7 +104,10 @@ def load_csv_and_reshape(file_path:str, prefix:str=None, shape:Tuple[int,int]=(3
 
     return data
 
-def load_raw_data(X_folder: str, y_file: Optional[str] = None) -> Tuple[dict,dict]:
+def load_raw_data(
+        X_folder: str,
+        y_file: Optional[str] = None,
+        ) -> Tuple[dict,dict]:
     """
     Load training and testing data from specified directories.
 
@@ -106,11 +116,9 @@ def load_raw_data(X_folder: str, y_file: Optional[str] = None) -> Tuple[dict,dic
         y_file (str): Path to the CSV file containing y.
 
     Returns:
-        tuple: A tuple containing:
-          mapping well IDs to tuples of (X_raw, y_raw).
+        tuple: A tuple containing.
             X_raw (dict): Maps IDs to the data on X_folder.
             y_raw (dict): Maps IDs to the data on y_file.
-
     """
     # Get IDs
     ids = sorted({int(filename.split("_")[1]) for filename in os.listdir(X_folder)})
@@ -126,7 +134,10 @@ def load_raw_data(X_folder: str, y_file: Optional[str] = None) -> Tuple[dict,dic
 
     return X_raw, y_raw
 
-def array_reconstruct(patches:List[np.ndarray], num_columns:int) -> np.ndarray:
+def array_reconstruct(
+        patches: List[np.ndarray],
+        num_columns: int,
+        ) -> np.ndarray:
     """
     Reconstruct an array from a list of numpy arrays (patches) into a grid format.
 
@@ -135,8 +146,7 @@ def array_reconstruct(patches:List[np.ndarray], num_columns:int) -> np.ndarray:
         num_columns (int): The number of columns in the reconstructed image.
 
     Returns:
-        numpy.ndarray: A 2D reconstructed array.
-    
+        output_array (numpy.ndarray): A 2D reconstructed array.
     """
     num_patches = len(patches)
     num_rows = (num_patches + num_columns - 1) // num_columns
@@ -153,7 +163,10 @@ def array_reconstruct(patches:List[np.ndarray], num_columns:int) -> np.ndarray:
 
     return output_array
 
-def reconstruct_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]], column_config: Dict[Any, int]) -> Dict[Any, Optional[np.ndarray]]:
+def reconstruct_multiple(
+        data_dict: Dict[Any, List[np.ndarray]],
+        column_config: Dict[Any, int],
+        ) -> Dict[Any, Optional[np.ndarray]]:
     """
     Reconstruct multiple arrays based on specified column configurations.
 
@@ -163,7 +176,6 @@ def reconstruct_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]], colum
 
     Returns:
         reconstructed_data (dict): Dictionary (ID: reconstructed_array) of reconstructed arrays.
-        
     """
     reconstructed_data = {}
 
@@ -175,12 +187,17 @@ def reconstruct_multiple(data_dict: Dict[Any, Optional[List[np.ndarray]]], colum
 
     return reconstructed_data
 
-def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dict, save_path:str) -> None:
+def data_restore(
+        X_folder_path: str,
+        y_file_path: Union[str,None],
+        column_config: dict,
+        save_path: str,
+        ) -> None:
     """
     Load and reconstruct data arrays from patch files.
 
     This function takes the path to a folder containing patch files for features (X) 
-    and a file for labels (y). The data is reconstructed using a provided column 
+    and a file for targets (y). The data is reconstructed using a provided column 
     configuration. If specified, the resulting arrays are saved to the given path.
 
     Parameters:
@@ -191,7 +208,6 @@ def data_restore(X_folder_path:str,y_file_path:Union[str,None],column_config:dic
 
     Raises:
         FileNotFoundError: If the provided paths do not exist.
-
     """
     X_patches, y_patches = load_raw_data(X_folder_path,y_file_path)
 

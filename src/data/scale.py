@@ -1,6 +1,6 @@
 
 import numpy as np
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ class MinMaxScaler(Scaler):
         fit_transform(X): Fits the scaler and then transforms the data.
         inverse_transform(X): Transforms the scaled data back to the original representation.
     """
-    def __init__(self, feature_range=(0, 1)):
+    def __init__(self, feature_range:Optional[Tuple[Union[int,float],Union[int,float]]]=(0, 1)):
         super().__init__()
         self.min = None
         self.max = None
@@ -169,18 +169,22 @@ class RobustScaler(Scaler):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def scaler_minmax(X:np.ndarray, feature_range:Tuple[Union[int,float],Union[int,float]]=(0,1), transform:bool=False) -> Tuple[np.ndarray,MinMaxScaler]:
+def scaler_minmax(
+        X:np.ndarray,
+        feature_range:Optional[Tuple[Union[int,float],Union[int,float]]] = (0,1),
+        transform: Optional[bool] = False,
+        ) -> Tuple[MinMaxScaler, Optional[np.ndarray]]:
     """
     Create and fit a MinMaxScaler to the provided data, returning the scaler and optionally the scaled data.
 
     Parameters:
-        X (numpy.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
+        X (np.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
         feature_range (tuple, optional): Desired range of transformed data. Default is (0, 1).
         transform (bool, optional): Transform and return the provided data. Default False.
     
     Returns:
         scaler (MinMaxScaler): The Min-Max scaler.
-        X_scaled (numpy.ndarray): The scaled data.
+        X_scaled (np.ndarray, optional): The scaled data.
     """
     scaler = MinMaxScaler(feature_range=feature_range)
     if transform:
@@ -190,17 +194,20 @@ def scaler_minmax(X:np.ndarray, feature_range:Tuple[Union[int,float],Union[int,f
         scaler.fit(X)
         return scaler
 
-def scaler_standar(X:np.ndarray, transform:bool=False) -> Tuple[np.ndarray,StandardScaler]:
+def scaler_standar(
+        X: np.ndarray,
+        transform: Optional[bool] = False,
+        ) -> Tuple[StandardScaler, Optional[np.ndarray]]:
     """
     Create and fit a StandardScaler to the provided data, returning the scaler and optionally the scaled data.
 
     Parameters:
-        X (numpy.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
+        X (np.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
         transform (bool, optional): Transform and return the provided data. Default False.
 
     Returns:
         scaler (StandardScaler): The Standard scaler.
-        X_scaled (numpy.ndarray): The scaled data.  
+        X_scaled (np.ndarray, optional): The scaled data.  
     """
     scaler = StandardScaler()
     if transform:
@@ -210,17 +217,20 @@ def scaler_standar(X:np.ndarray, transform:bool=False) -> Tuple[np.ndarray,Stand
         scaler.fit(X)
         return scaler
 
-def scaler_robust(X:np.ndarray, transform:bool=False) -> Tuple[np.ndarray,RobustScaler]:
+def scaler_robust(
+        X:np.ndarray,
+        transform: Optional[bool] = False,
+        ) -> Tuple[RobustScaler, Optional[np.ndarray]]:
     """
     Create and fit a RobustScaler to the provided data, returning the scaler and optionally the scaled data.
 
     Parameters:
-        X (numpy.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
+        X (np.ndarray): The input data to be scaled, expected to have shape (n_samples, h, w).
         transform (bool, optional): Transform and return the provided data. Default False.
         
     Returns:
         scaler (RobustScaler): The Robust scaler.
-        X_scaled (numpy.ndarray): The scaled data. 
+        X_scaled (np.ndarray, optional): The scaled data. 
     """
     scaler = RobustScaler()
     if transform:
