@@ -127,18 +127,44 @@ class Network(nn.Module):
             "network_results": network_results,
         }, path)
 
-    @staticmethod
-    def load_model(path:str) -> None:
+    @classmethod
+    def load_model(cls, path: str):
         """
-        Static method to load a model from a file. This method must be overridden by
-        subclasses to provide the specific loading mechanism for each model type.
-        
+        Static method to load a model from a file and create an instance from the saved configuration.
+        This method uses the configuration dictionary and the from_dict method to create the model.
+
         Args:
             path (str): The path to the model file to load.
+        
+        Returns:
+            network (Network): The model instance with loaded weights and configuration.
+        """
+        checkpoint = torch.load(path)
+        network_config = checkpoint["network_config"]
+        network_state_dict = checkpoint["network_state_dict"]
+        network_results = checkpoint["network_results"]
+
+        network = cls.from_dict(network_config)
+
+        network.load_state_dict(network_state_dict)
+        network.results = network_results
+
+        return network
+    
+    @staticmethod
+    def from_dict(config_dict):
+        """
+        Creates a model instance from a configuration dictionary.
+        
+        Args:
+            config_dict (dict): A dictionary containing the model's configuration.
+            
+        Returns:
+            Model: A model instance created from the configuration dictionary.
         
         Raises:
             NotImplementedError: If the method is not implemented in the subclass.
         """
-        raise NotImplementedError("The 'load_model' staticmethod must be implemented in the subclass.")
-    
+        raise NotImplementedError("The 'from_dict' static method must be implemented in the subclass.")
+
 #---------------------------------------------------------------------------------------------------

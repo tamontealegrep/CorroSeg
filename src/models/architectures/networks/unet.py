@@ -134,42 +134,31 @@ class Unet(Network):
         return x
     
     @staticmethod
-    def load_model(filename):
+    def from_dict(config_dict):
         """
-        Loads a model from a file, reconstructing the architecture
-        based on the saved configuration and loading the model weights.
+        Creates a Unet model instance from the provided configuration dictionary.
 
         Args:
-            filename (str): The path to the model file to load.
+            config_dict (dict): A dictionary containing the model's configuration.
 
         Returns:
-            Unet: The model with the loaded weights and configuration.
+            Unet: An instance of the Unet model constructed from the dictionary.
         """
-        checkpoint = torch.load(filename)
-        network_config = checkpoint["network_config"]
-        network_state_dict = checkpoint["network_state_dict"]
-        network_results = checkpoint["network_results"]
-
-        model = Unet(
-            input_channels=network_config["input_channels"],
-            output_channels=network_config["output_channels"],
-            base_channels=network_config["base_channels"],
-            num_layers=network_config["num_layers"],
-            encoder_block_type=eval(network_config["encoder_block_type"]),
-            bottleneck_block_type=eval(network_config["bottleneck_block_type"]),
-            decoder_block_type=eval(network_config["decoder_block_type"]),
-            skip_connections_block_type=eval(network_config["skip_connections_block_type"]) if network_config["skip_connections_block_type"] else None,
-            encoder_kwargs=network_config["encoder_kwargs"],
-            bottleneck_kwargs=network_config["bottleneck_kwargs"],
-            decoder_kwargs=network_config["decoder_kwargs"],
-            skip_connections_kwargs=network_config["skip_connections_kwargs"],
-            attention_gates=network_config["attention_gates"],
-            output_activation=network_config["output_activation"],
+        return Unet(
+            input_channels=config_dict["input_channels"],
+            output_channels=config_dict["output_channels"],
+            base_channels=config_dict["base_channels"],
+            num_layers=config_dict["num_layers"],
+            encoder_block_type=eval(config_dict["encoder_block_type"]),
+            bottleneck_block_type=eval(config_dict["bottleneck_block_type"]),
+            decoder_block_type=eval(config_dict["decoder_block_type"]),
+            skip_connections_block_type=eval(config_dict["skip_connections_block_type"]) if config_dict["skip_connections_block_type"] else None,
+            encoder_kwargs=config_dict["encoder_kwargs"],
+            bottleneck_kwargs=config_dict["bottleneck_kwargs"],
+            decoder_kwargs=config_dict["decoder_kwargs"],
+            skip_connections_kwargs=config_dict["skip_connections_kwargs"],
+            attention_gates=config_dict["attention_gates"],
+            output_activation=config_dict["output_activation"],
         )
-
-        model.load_state_dict(network_state_dict)
-        model.results = network_results
-
-        return model
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

@@ -100,40 +100,29 @@ class ViT(Network):
         return x
     
     @staticmethod
-    def load_model(filename):
+    def from_dict(config_dict):
         """
-        Loads a model from a file, reconstructing the architecture
-        based on the saved configuration and loading the model weights.
+        Creates a ViT model instance from the provided configuration dictionary.
 
         Args:
-            filename (str): The path to the model file to load.
+            config_dict (dict): A dictionary containing the model's configuration.
 
         Returns:
-            Unet: The model with the loaded weights and configuration.
+            ViT: An instance of the ViT model constructed from the dictionary.
         """
-        checkpoint = torch.load(filename)
-        network_config = checkpoint["network_config"]
-        network_state_dict = checkpoint["network_state_dict"]
-        network_results = checkpoint["network_results"]
-
-        model = ViT(
-            input_channels=network_config["input_channels"],
-            output_channels=network_config["output_channels"],
-            input_height=network_config["input_height"],
-            input_width=network_config["input_width"],
-            patch_height=network_config["patch_height"],
-            patch_width=network_config["patch_width"],
-            embed_dim=network_config["embed_dim"],
-            num_layers=network_config["num_layers"],
-            num_heads=network_config["num_heads"],
-            extractor_block_type=eval(network_config["extractor_block_type"]),
-            extractor_kwargs=network_config["extractor_kwargs"],
-            output_activation=network_config["output_activation"],
+        return ViT(
+            input_channels=config_dict["input_channels"],
+            output_channels=config_dict["output_channels"],
+            input_height=config_dict["input_height"],
+            input_width=config_dict["input_width"],
+            patch_height=config_dict["patch_height"],
+            patch_width=config_dict["patch_width"],
+            embed_dim=config_dict["embed_dim"],
+            num_layers=config_dict["num_layers"],
+            num_heads=config_dict["num_heads"],
+            extractor_block_type=eval(config_dict["extractor_block_type"]),
+            extractor_kwargs=config_dict["extractor_kwargs"],
+            output_activation=config_dict["output_activation"],
         )
-
-        model.load_state_dict(network_state_dict)
-        model.results = network_results
-
-        return model
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

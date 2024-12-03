@@ -162,18 +162,18 @@ class ViTUnet(Network):
         return x
     
     @staticmethod
-    def load_model(filename):
+    def load_model(path):
         """
         Loads a model from a file, reconstructing the architecture
         based on the saved configuration and loading the model weights.
 
         Args:
-            filename (str): The path to the model file to load.
+            path (str): The path to the model file to load.
 
         Returns:
             Unet: The model with the loaded weights and configuration.
         """
-        checkpoint = torch.load(filename)
+        checkpoint = torch.load(path)
         network_config = checkpoint["network_config"]
         network_state_dict = checkpoint["network_state_dict"]
         network_results = checkpoint["network_results"]
@@ -208,5 +208,41 @@ class ViTUnet(Network):
         model.results = network_results
 
         return model
+    
+    @staticmethod
+    def from_dict(config_dict):
+        """
+        Creates a ViTUnet model instance from the provided configuration dictionary.
 
+        Args:
+            config_dict (dict): A dictionary containing the model's configuration.
+
+        Returns:
+            ViTUnet: An instance of the ViTUnet model constructed from the dictionary.
+        """
+        return ViTUnet(
+            input_channels=config_dict["input_channels"],
+            output_channels=config_dict["output_channels"],
+            input_height=config_dict["input_height"],
+            input_width=config_dict["input_width"],
+            patch_height=config_dict["patch_height"],
+            patch_width=config_dict["patch_width"],
+            embed_dim=config_dict["embed_dim"],
+            num_vit_layers=config_dict["num_vit_layers"],
+            num_vit_heads=config_dict["num_vit_heads"],
+            base_unet_channels=config_dict["base_unet_channels"],
+            num_unet_layers=config_dict["num_unet_layers"],
+            extractor_block_type=eval(config_dict["extractor_block_type"]),
+            encoder_block_type=eval(config_dict["encoder_block_type"]),
+            bottleneck_block_type=eval(config_dict["bottleneck_block_type"]),
+            decoder_block_type=eval(config_dict["decoder_block_type"]),
+            skip_connections_block_type=eval(config_dict["skip_connections_block_type"]) if config_dict["skip_connections_block_type"] else None,
+            extractor_kwargs=config_dict["extractor_kwargs"],
+            encoder_kwargs=config_dict["encoder_kwargs"],
+            bottleneck_kwargs=config_dict["bottleneck_kwargs"],
+            decoder_kwargs=config_dict["decoder_kwargs"],
+            skip_connections_kwargs=config_dict["skip_connections_kwargs"],
+            attention_gates=config_dict["attention_gates"],
+            output_activation=config_dict["output_activation"],
+        )
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
