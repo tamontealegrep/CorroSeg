@@ -3,7 +3,7 @@ import os
 import yaml
 import pickle
 import numpy as np
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Dict
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ def load_pkl(file_path: str) -> Any:
         file_path (str): The path to the file from which the object will be loaded.
 
     Returns:
-        Any: The object loaded from the pickle file.
+        (Any): The object loaded from the pickle file.
     """
     with open(file_path, 'rb') as file:
         return pickle.load(file)
@@ -43,7 +43,7 @@ def load_config(file_path: str) -> dict:
         file_path (str): The path to the YAML file to be loaded.
 
     Returns:
-        dict: A dictionary containing the loaded configuration.
+        (dict): A dictionary containing the loaded configuration.
 
     Raises:
         FileNotFoundError: If the specified file does not exist.
@@ -53,69 +53,56 @@ def load_config(file_path: str) -> dict:
         config = yaml.safe_load(file)
     return config
 
-def save_dict_arrays(folder_path: str,
-                     X: dict,
-                     y: Optional[dict] = None,
-                     ) -> None:
+def npy_file_to_dict(file_path: str) -> Dict[str, np.ndarray]:
     """
-    Save two lists of arrays to specified folders as .npy files.
+    Loads a single .npy file from the specified path and returns its contents
+    in a dictionary with the file name (without extension) as the key.
 
     Parameters:
-        folder_path (str): Directory path to save the arrays.
-        X (list): List of arrays to be saved.
-        y (list): List of arrays to be saved (can be None).
+        file_path (str): The full path of the file to be loaded.
 
     Returns:
-        None
+        dict: A dictionary with the file name (without extension) as the key
+              and the contents of the file (np.ndarray) as the value.
+    """
+    data_dict = {}
 
+    if os.path.exists(file_path) and file_path.endswith(".npy"):
+        file_name = os.path.basename(file_path)
+        file_id = file_name.split(".")[0]
+        data_dict[file_id] = np.load(file_path)
+
+    return data_dict
+
+def load_arrays_from_folders(folder_path: str) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+    """
+    Loads arrays from 'X' and 'y' subdirectories inside the specified folder path.
+    Uses the load_single_file_to_dict function to load each file into a dictionary.
+
+    Parameters:
+        folder_path (str): The directory path where the 'X' and 'y' subfolders are located.
+
+    Returns:
+        (tuple): A tuple containing.
+            X (dict): A dictionary with the arrays in the 'X' subfolder.
+            y (dict): A dictionary with the arrays in the 'y' subfolder.
     """
     X_folder = os.path.join(folder_path, "X")
     y_folder = os.path.join(folder_path, "y")
 
-    # Save X arrays
-    os.makedirs(X_folder, exist_ok=True)
-    for id, array in X.items():
-        if array is not None:
-            np.save(os.path.join(X_folder, f"X_{id}.npy"), array)
-
-    # Save y arrays
-    if y is not None and not all(i is None for i in y.values()):
-        os.makedirs(y_folder, exist_ok=True)
-        for id, array in y.items():
-            if array is not None:
-                np.save(os.path.join(y_folder, f"y_{id}.npy"), array)
-
-def load_dict_arrays(folder_path: str) -> Tuple[dict,dict]:
-    """
-    Load arrays from specified folder paths. Loads arrays for X and y from
-    their respective subdirectories and returns them as dictionaries.
-
-    Parameters:
-        folder_path (str): Directory path where arrays are stored.
-
-    Returns:
-        tuple: A tuple containing:
-        X (dict): A dictionary with the arrays in 'X' folder.
-        y (dict): A dictionary with the arrays in 'y' folder.
-    """
-    X_folder = os.path.join(folder_path, "X")
-    y_folder = os.path.join(folder_path, "y")
-
-    # Load X arrays
     X = {}
     if os.path.exists(X_folder):
         for file_name in os.listdir(X_folder):
             if file_name.endswith(".npy"):
-                array_id = file_name.split("_")[1].replace(".npy", "")
-                X[array_id] = np.load(os.path.join(X_folder, file_name))
+                file_path = os.path.join(X_folder, file_name)
+                X.update(npy_file_to_dict(file_path))
 
-    # Load y arrays
     y = {}
     if os.path.exists(y_folder):
         for file_name in os.listdir(y_folder):
             if file_name.endswith(".npy"):
-                array_id = file_name.split("_")[1].replace(".npy", "")
-                y[array_id] = np.load(os.path.join(y_folder, file_name))
+                file_path = os.path.join(y_folder, file_name)
+                y.update(npy_file_to_dict(file_path))
 
     return X, y
 

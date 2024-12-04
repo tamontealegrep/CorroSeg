@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 from typing import Any, List, Dict, Tuple, Optional, Union
-from src.utils.files import save_dict_arrays
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -186,6 +185,38 @@ def reconstruct_multiple(
             reconstructed_data[id] = array_reconstruct(data_dict[id], column_config[id])
 
     return reconstructed_data
+
+def save_dict_arrays(folder_path: str,
+                     X: dict,
+                     y: Optional[dict] = None,
+                     ) -> None:
+    """
+    Save two lists of arrays to specified folders as .npy files.
+
+    Parameters:
+        folder_path (str): Directory path to save the arrays.
+        X (list): List of arrays to be saved.
+        y (list): List of arrays to be saved (can be None).
+
+    Returns:
+        None
+
+    """
+    X_folder = os.path.join(folder_path, "X")
+    y_folder = os.path.join(folder_path, "y")
+
+    # Save X arrays
+    os.makedirs(X_folder, exist_ok=True)
+    for id, array in X.items():
+        if array is not None:
+            np.save(os.path.join(X_folder, f"well_{id}.npy"), array)
+
+    # Save y arrays
+    if y is not None and not all(i is None for i in y.values()):
+        os.makedirs(y_folder, exist_ok=True)
+        for id, array in y.items():
+            if array is not None:
+                np.save(os.path.join(y_folder, f"well_{id}.npy"), array)
 
 def data_restore(
         X_folder_path: str,
