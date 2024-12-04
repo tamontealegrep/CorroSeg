@@ -58,6 +58,9 @@ def predict_dataloader(model: nn.Module,
             output = model(inputs)
             output = output.squeeze().cpu().numpy()
             outputs.append(output)
+     
+    if len(outputs[-1].shape) != len(outputs[0].shape):
+        outputs[-1] = np.expand_dims(outputs[-1], axis=0)
 
     return np.concatenate(outputs, axis=0)
 
