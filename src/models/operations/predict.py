@@ -7,7 +7,9 @@ from torch.utils.data import Dataset, DataLoader
 
 #---------------------------------------------------------------------------------------------------
 
-def predict_dataset(model:nn.Module, dataset:torch.utils.data.Dataset):
+def predict_dataset(model: nn.Module,
+                    dataset:torch.utils.data.Dataset,
+                    ) -> np.ndarray:
     """
     Predict outputs for a given dataset using the specified model.
 
@@ -16,7 +18,7 @@ def predict_dataset(model:nn.Module, dataset:torch.utils.data.Dataset):
         dataset (torch.utils.data.Dataset): The dataset containing input data. Each item is expected to be a tuple (input, label), but the label will be ignored during prediction.
 
     Returns:
-        np.ndarray: An array of model predictions corresponding to the inputs in the dataset.
+        (np.ndarray): An array of model predictions corresponding to the inputs in the dataset.
     """
     model.to(model.device)
     model.eval()
@@ -33,7 +35,9 @@ def predict_dataset(model:nn.Module, dataset:torch.utils.data.Dataset):
 
     return np.array(outputs)
 
-def predict_dataloader(model:nn.Module, dataloader:torch.utils.data.DataLoader):
+def predict_dataloader(model: nn.Module,
+                       dataloader: torch.utils.data.DataLoader,
+                       ) -> np.ndarray:
     """
     Predict outputs for a given DataLoader using the specified model.
 
@@ -42,7 +46,7 @@ def predict_dataloader(model:nn.Module, dataloader:torch.utils.data.DataLoader):
         dataloader (torch.utils.data.DataLoader): The DataLoader providing input data. Each batch consists of a tuple (input_data, label), but the label will be ignored.
 
     Returns:
-        np.ndarray: An array of model predictions corresponding to the inputs in the dataloader.
+        (np.ndarray): An array of model predictions corresponding to the inputs in the dataloader.
     """
     model.to(model.device)
     model.eval()
@@ -57,8 +61,9 @@ def predict_dataloader(model:nn.Module, dataloader:torch.utils.data.DataLoader):
 
     return np.concatenate(outputs, axis=0)
 
-
-def predict(model: nn.Module, data:Union[Dataset, DataLoader]):
+def predict(model: nn.Module,
+            data:Union[Dataset, DataLoader],
+            )  -> np.ndarray:
     """
     Predict outputs for a given dataset or dataloader using the specified model.
 

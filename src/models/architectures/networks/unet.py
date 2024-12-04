@@ -1,7 +1,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Type, Optional, Dict
+from typing import Self, Type, Optional, Dict
 
 from . import Network
 
@@ -161,7 +161,7 @@ class Unet(Network):
         return x
     
     @staticmethod
-    def from_dict(config_dict):
+    def from_dict(config_dict) -> Self:
         """
         Creates a Unet model instance from the provided configuration dictionary.
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from typing import List, Tuple, Union, Dict, Any
+from typing import Self, Optional, List, Tuple, Union, Dict, Any, Callable
 from torchinfo import summary
 
 from src.models.architectures.networks import Network
@@ -43,7 +43,8 @@ class ModelManager():
         scaler_params (dict): A dictionary with parameters for the scaler.
 
     Attributes:
-        config (dict): A dictionary containing the configuration parameters for the model, dataset, optimizer, loss function, and scaler.
+        config (dict): A dictionary containing the configuration parameters for 
+            the model, dataset, optimizer, loss function, and scaler.
         network (torch.nn.Module): The PyTorch model to be trained or evaluated.
         dataset_class (torch.utils.data.Dataset): The PyTorch dataset used in the data.
         loss_class (torch.nn.Module): The loss function used during training.
@@ -51,23 +52,24 @@ class ModelManager():
         optimizer (torch.optim.Optimizer): The optimizer used for training the model.
         optimizer_params (dict): A dictionary containing parameters for the optimizer.
         scaler_fn (function): A function that implements the scaling method.
-        scaler_params (dict): A dictionary containing parameters for the scaler.
+        scaler_params (dict): A dictionarArgsy containing parameters for the scaler.
         scaler (Scaler): The scaler used to preprocess input data.
         self.channels (int): The number of channels in the input data.
         self.height (int): The height (number of rows) of the input data.
         self.width (int): The width (number of columns) of the input data.
         placeholders (list): A list of placeholder values to be replaced in the input data.
-        value_range (tuple): A tuple defining the valid range of values for the input data, in the form (min, max).
+        value_range (tuple): A tuple defining the valid range of values for the input data, 
+            in the form (min, max).
         default_value (float or int): The value used to replace missing or invalid data in the dataset.
         device (torch.device): The device to perform calculations on.
         
     """
 
     def __init__(self,
-                 network:Network,
-                 dataset_class:torch.utils.data.Dataset,
-                 loss_class:nn.Module,
-                 optimizer_class:torch.optim.Optimizer,
+                 network: Network,
+                 dataset_class: torch.utils.data.Dataset,
+                 loss_class: nn.Module,
+                 optimizer_class: torch.optim.Optimizer,
                  scaler_type: str,
                  input_shape: Tuple[int,int,int],
                  placeholders: List[Union[int, float]],
@@ -132,27 +134,41 @@ class ModelManager():
 
         self.set_device()
 
-    def _augment_data(self, X:np.ndarray, y:np.ndarray, augmented_ratio:float) -> Tuple[np.ndarray,np.ndarray]:
+    def _augment_data(self,
+            X: np.ndarray,
+            y: np.ndarray,
+            augmented_ratio: float,
+            ) -> Tuple[np.ndarray,np.ndarray]:
         """
-        Augments the training data by applying the CutMix technique.
+        Augments the data by applying the CutMix technique.
 
-        Args:
-            X (np.ndarray): The input data (features).
-            y (np.ndarray): The target data (labels).
+        Parameters:
+            X (np.ndarray): The input feature array.
+            y (np.ndarray): The target array.
             augmented_ratio (float): The ratio of the data to augment.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The augmented input and target data.
+            (tuple): A tuple containing.
+                X (np.ndarray): The augmented feature array.
+                y (np.ndarray): The augmented label array.
         """
         X_aug, y_aug = cutmix_augment_data(X, y,int(X.shape[0] * augmented_ratio))
         X, y = np.concatenate((X, X_aug), axis=0), np.concatenate((y, y_aug), axis=0)
         return X, y
     
-    def _train_val_split(self, X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_stride:int=0, width_stride:int=18, fraction:float=0.2, seed:int=None, expand:bool=True) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+    def _train_val_split(self,
+            X: Dict[Any,np.ndarray],
+            y: Dict[Any,np.ndarray],
+            height_stride: Optional[int] = 0,
+            width_stride: Optional[int] = 18,
+            fraction: Optional[float] = 0.2,
+            seed: Optional[int] = None,
+            expand: Optional[bool] = True,
+            ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
         """
         Splits the data into training and validation sets.
 
-        Args:
+        Parameters:
             X (Dict[Any, np.ndarray]): Input data (features).
             y (Dict[Any, np.ndarray]): Target data (labels).
             height_stride (int, optional): Stride in the height direction. Default is 0.
@@ -162,7 +178,11 @@ class ModelManager():
             expand (bool, optional): Whether to expand the data for lateral continuity. Default is True.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The training and validation splits of the input and target data.
+            (tuple): A tuple containing.
+                X_train (np.ndarray): The training split of the feature array.
+                y_train (np.ndarray): The training split of the target array.
+                X_val (np.ndarray): The validation split of the feature array.
+                y_val (np.ndarray): The validation split of the target array.
         """
         if expand:
             X, y = data_expand(X, y)
@@ -171,15 +191,15 @@ class ModelManager():
         X_train, y_train, X_val, y_val = data_split(X,y,self.height,height_stride,self.width,width_stride,self.default_value,fraction,seed)
         return X_train, y_train, X_val, y_val
     
-    def _preprocess_data(self, X:np.ndarray) -> np.ndarray:
+    def _preprocess_data(self, X: np.ndarray) -> np.ndarray:
         """
         Preprocesses the input data using the fitted scaler.
 
-        Args:
+        Parameters:
             X (np.ndarray): The input data to preprocess.
 
         Returns:
-            np.ndarray: The preprocessed input data.
+            X (np.ndarray): The preprocessed input data.
 
         Raises:
             RuntimeError: If the scaler has not been fitted yet.
@@ -189,30 +209,31 @@ class ModelManager():
         X = data_fix(X,self.placeholders,self.default_value,self.value_range[0],self.value_range[1],self.scaler)
         return X
     
-    def set_device(self,device_name:str=None) -> None:
+    def set_device(self, device_name: Optional[str] = None) -> None:
         """
         Sets the device (CPU or GPU) for the network.
 
-        Args:
-            device_name (str, optional): The name of the device to use. Default is None, which uses the device specified in the network.
+        Parameters:
+            device_name (str, optional): The name of the device to use. Default is None, 
+                which uses the device specified in the network. Default None. Options: cpu and cuda.
         """
         self.network.set_device(device_name)
         self.device = self.network.device
         
-    def summary(self, depth:int=5) -> None:
+    def summary(self, depth: Optional[int] = 5) -> None:
         """
         Prints a summary of the model architecture.
 
-        Args:
+        Parameters:
             depth (int, optional): The depth of the summary to print. Default is 5.
         """
         print(summary(self.network, input_size=(1, self.channels, self.height, self.width),depth=depth,device=self.device))
     
-    def fit_scaler(self, X:np.ndarray) -> None:
+    def fit_scaler(self, X: np.ndarray) -> None:
         """
         Fits the scaler to the provided data.
 
-        Args:
+        Parameters:
             X (np.ndarray): The input data to fit the scaler.
 
         Raises:
@@ -222,13 +243,22 @@ class ModelManager():
         scaler = self.scaler_fn(X, **self.scaler_params)
         self.scaler = scaler
 
-    def setup_train_val_data(self, X:Dict[Any,np.ndarray], y:Dict[Any,np.ndarray], height_stride:int=0, width_stride:int=18, fraction:float=0.2, seed:int=None, expand=True, augmented_ratio:float=0.5) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+    def setup_train_val_data(self,
+            X: Dict[Any,np.ndarray],
+            y: Dict[Any,np.ndarray],
+            height_stride: Optional[int] = 0,
+            width_stride: Optional[int] = 18,
+            fraction: Optional[float] = 0.2,
+            seed: Optional[int] = None,
+            expand: Optional[bool] = True,
+            augmented_ratio: Optional[float] = 0.5,
+            ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
         """
         Prepares and splits the data for training and validation, applying preprocessing and augmentation.
 
-        Args:
-            X (Dict[Any, np.ndarray]): Input data (features).
-            y (Dict[Any, np.ndarray]): Target data (labels).
+        Parameters:
+            X (Dict[Any, np.ndarray]): Input feature array.
+            y (Dict[Any, np.ndarray]): Target array.
             height_stride (int, optional): Stride in the height direction. Default is 0.
             width_stride (int, optional): Stride in the width direction. Default is 18.
             fraction (float, optional): The fraction of data to use for validation. Default is 0.2.
@@ -237,9 +267,19 @@ class ModelManager():
             augmented_ratio (float, optional): The ratio of data to augment. Default is 0.5.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The training and validation data and labels.
+            (tuple): A tuple containing.
+                X_train (np.ndarray): The processed training split of the feature array.
+                y_train (np.ndarray): The processed training split of the target array.
+                X_val (np.ndarray): The processed validation split of the feature array.
+                y_val (np.ndarray): The processed validation split of the target array.
         """
-        X_train, y_train, X_val, y_val = self._train_val_split(X, y, height_stride=height_stride, width_stride=width_stride, fraction=fraction,seed=seed,expand=expand)
+        X_train, y_train, X_val, y_val = self._train_val_split(X,
+                                                               y,
+                                                               height_stride=height_stride,
+                                                               width_stride=width_stride,
+                                                               fraction=fraction,
+                                                               seed=seed,
+                                                               expand=expand)
         if self.scaler is None:
             self.fit_scaler(X_train)
         X_train = np.array([self._preprocess_data(X_train[i]) for i in range(X_train.shape[0])])
@@ -247,18 +287,25 @@ class ModelManager():
         X_train, y_train = self._augment_data(X_train, y_train, augmented_ratio)
         return X_train, y_train, X_val, y_val
     
-    def setup_data(self, X:np.ndarray, y:Union[np.ndarray,None]=None, height_stride:int=0, width_stride:int=0) -> Tuple[np.ndarray,np.ndarray]:
+    def setup_data(self,
+                   X: np.ndarray,
+                   y: Optional[Union[np.ndarray,None]] = None,
+                   height_stride: Optional[int] = 0,
+                   width_stride: Optional[int] = 0,
+                   ) -> Tuple[np.ndarray,np.ndarray]:
         """
         Prepares the data for training or prediction by applying preprocessing.
 
-        Args:
+        Parameters:
             X (np.ndarray): Input data (features).
             y (Union[np.ndarray, None], optional): Target data (labels). Default is None.
             height_stride (int, optional): Stride in the height direction. Default is 0.
             width_stride (int, optional): Stride in the width direction. Default is 0.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The preprocessed input and target data.
+            (tuple): A tuple containing.
+                X (np.ndarray): The preprocessed input feature array.
+                y (np.ndarray): The preprocessed target array.
         """
         height_stride = height_stride if height_stride > 0 else self.height
         width_stride = width_stride if width_stride > 0 else self.width
@@ -266,42 +313,55 @@ class ModelManager():
         X = np.array([self._preprocess_data(X[i]) for i in range(X.shape[0])])
         return X, y
     
-    def build_dataset(self, X:np.ndarray, y:Union[np.ndarray,None]=None, transform=None, transform_config={}) -> torch.utils.data.Dataset:
+    def build_dataset(self,
+                      X: np.ndarray,
+                      y: Optional[Union[np.ndarray,None]] = None,
+                      transform: Optional[Callable] = None,
+                      transform_config: Optional[dict] = {},
+                      ) -> torch.utils.data.Dataset:
         """
         Builds a custom dataset using the provided data and transformation.
 
-        Args:
-            X (np.ndarray): Input data (features).
-            y (Union[np.ndarray, None], optional): Target data (labels). Default is None.
+        Parameters:
+            X (np.ndarray): Input feature array.
+            y (Union[np.ndarray, None], optional): Target array. Default is None.
             transform (Optional[callable], optional): A transformation function to apply to the data. Default is None.
             transform_config (dict, optional): Additional configuration for the transformation. Default is an empty dictionary.
 
         Returns:
-            torch.utils.data.Dataset: A PyTorch dataset containing the input data and labels.
+            dataset (torch.utils.data.Dataset): A PyTorch dataset containing the input features and targets.
         """
         dataset = self.dataset_class(X, y, transform, **transform_config)
         return dataset
     
-    def build_dataloader(self, dataset:torch.utils.data.Dataset, batch_size:int, shuffle:bool=False) -> torch.utils.data.DataLoader:
+    def build_dataloader(self,
+                         dataset: torch.utils.data.Dataset,
+                         batch_size: int,
+                         shuffle: Optional[bool] = False,
+                         ) -> torch.utils.data.DataLoader:
         """
         Creates a PyTorch DataLoader for the given dataset.
 
-        Args:
+        Parameters:
             dataset (torch.utils.data.Dataset): The dataset to load.
             batch_size (int): The batch size for the DataLoader.
             shuffle (bool, optional): Whether to shuffle the data. Default is False.
 
         Returns:
-            torch.utils.data.DataLoader: A DataLoader for the given dataset.
+            dataloader (torch.utils.data.DataLoader): A DataLoader for the given dataset.
         """
         dataloader = DataLoader(dataset,batch_size=batch_size,shuffle=shuffle)
         return dataloader
     
-    def train(self, train_loader:torch.utils.data.DataLoader, val_loader:Union[torch.utils.data.DataLoader,None]=None, num_epochs=50) -> None:
+    def train(self,
+              train_loader: torch.utils.data.DataLoader,
+              val_loader: Optional[Union[torch.utils.data.DataLoader,None]] = None,
+              num_epochs: Optional[int] = 50,
+              ) -> None:
         """
         Trains the model using the provided data loaders.
 
-        Args:
+        Parameters:
             train_loader (torch.utils.data.DataLoader): The DataLoader for training data.
             val_loader (Union[torch.utils.data.DataLoader, None], optional): The DataLoader for validation data. Default is None.
             num_epochs (int, optional): The number of epochs to train the model. Default is 50.
@@ -312,11 +372,14 @@ class ModelManager():
         """
         Evaluates the model on the provided data.
 
-        Args:
+        Parameters:
             data (Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]): The dataset or DataLoader containing the data to evaluate on.
 
         Returns:
-            Tuple[np.ndarray, List[float], float]: The evaluation results, including predictions, loss, and average loss.
+            (tuple): A tuple containing.
+                data_pred (np.ndarray): The predictions for input feature array.
+                losses (List[float]): The individual loss for each sample.
+                average_loss (float): The average loss.
         """
         return self.network.evaluate_model(data, self.loss_class)
         
@@ -324,19 +387,25 @@ class ModelManager():
         """
         Makes predictions using the trained model on the provided data.
 
-        Args:
+        Parameters:
             data (Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]): The dataset or DataLoader containing the data for prediction.
 
         Returns:
-            np.ndarray: The predicted values.
+            (np.ndarray): The predicted values.
         """
         return self.network.predict_model(data)
     
-    def predict_well(self, X:np.ndarray, height_stride:int=0, width_stride:int=0, batch_size:int=64, expand:bool=True) -> Tuple[np.ndarray,np.ndarray]:
+    def predict_well(self,
+                     X: np.ndarray,
+                     height_stride: Optional[int] = 0,
+                     width_stride: Optional[int] = 0,
+                     batch_size: Optional[int] = 64,
+                     expand: Optional[bool] = True,
+                     ) -> np.ndarray:
         """
         Makes predictions on the well data with additional processing like expansion and reconstruction.
 
-        Args:
+        Parameters:
             X (np.ndarray): Input well data.
             height_stride (int, optional): Stride in the height direction. Default is 0.
             width_stride (int, optional): Stride in the width direction. Default is 0.
@@ -344,7 +413,7 @@ class ModelManager():
             expand (bool, optional): Whether to expand the data before processing. Default is True.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The predicted data and the corresponding labels.
+            X_output (np.ndarray): The predicted data.
         """
         height_stride = height_stride if height_stride > 0 else self.height
         width_stride = width_stride if width_stride > 0 else self.width
@@ -360,32 +429,38 @@ class ModelManager():
             X_output = array_reduction(X_output)
         return X_output
     
-    def apply_threshold_to_data(self, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:
+    def apply_threshold_to_data(self,
+                                X: np.ndarray,
+                                threshold: Optional[float] = 0.5,
+                                ) -> np.ndarray:
         """
         Apply a threshold to the input data and return a binary mask.
 
         This function converts the input data into a binary mask by applying the specified threshold. 
         Any value greater than the threshold is set to 1, and values less than or equal to the threshold are set to 0.
 
-        Args:
+        Parameters:
             data (np.ndarray): The input data array to which the threshold will be applied.
             threshold (float, optional): The threshold value. Default is 0.5.
 
         Returns:
-            np.ndarray: A binary mask where values greater than the threshold are 1, and others are 0.
+            (np.ndarray): A binary mask where values greater than the threshold are 1, and others are 0.
         """
         return ((X) > threshold).astype(int)
     
-    def compute_loss(self, y_pred:np.ndarray, y:np.ndarray) -> float:
+    def compute_loss(self,
+                     y_pred:np.ndarray,
+                     y:np.ndarray,
+                     ) -> float:
         """
         Computes the loss between the predicted and actual values.
 
-        Args:
+        Parameters:
             y_pred (np.ndarray): The predicted output from the model.
             y (np.ndarray): The true labels.
 
         Returns:
-            float: The calculated loss value.
+            (float): The calculated loss value.
         
         Raises:
             ValueError: If the shapes of `y_pred` and `y` do not match.
@@ -401,7 +476,7 @@ class ModelManager():
         """
         Saves the trained model to a file.
 
-        Args:
+        Parameters:
             path (str): The file path where the model will be saved.
         """
         torch.save({
@@ -414,12 +489,17 @@ class ModelManager():
         }, path)
 
     @staticmethod
-    def load_model(network_class:Network, path:str):
+    def load_model(network_class: Network,
+                   path: str,
+                   ) -> Self:
         """
         Loads a trained model from a file.
 
-        Args:
+        Parameters:
             path (str): The file path from where the model will be loaded.
+
+        Returns:
+            (ModelManager) : The loaded model.
         """
         checkpoint = torch.load(path)
         hyperparams_config = checkpoint["hyperparams_config"]
@@ -437,16 +517,18 @@ class ModelManager():
         return model
     
     @staticmethod
-    def from_dict(network:Network, config_dict:dict):
+    def from_dict(network: Network,
+                  config_dict: dict,
+                  ) -> Self:
         """
         Creates a ModelManager instance from the provided network and configuration dictionary.
 
-        Args:
+        Parameters:
             network (Network): A PyTorch network.
             config_dict (dict): A dictionary containing the model's configuration.
 
         Returns:
-            ModelManager : An instance of the ModelManager constructed from the dictionary.
+            (ModelManager) : An instance of the ModelManager constructed from the dictionary.
         """
         return ModelManager(
             network = network,

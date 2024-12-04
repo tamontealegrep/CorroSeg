@@ -2,6 +2,7 @@
 import torch
 from torch import nn
 from timeit import default_timer as timer
+from typing import Optional
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
 
@@ -9,7 +10,11 @@ from src.models.operations.evaluate import _evaluation_step
 
 #---------------------------------------------------------------------------------------------------
 
-def _train_step(model:nn.Module, train_loader:torch.utils.data.DataLoader, criterion:nn.Module, optimizer:torch.optim.Optimizer) -> float:
+def _train_step(model: nn.Module,
+                train_loader: torch.utils.data.DataLoader,
+                criterion: nn.Module,
+                optimizer:torch.optim.Optimizer,
+                ) -> float:
     """
     Perform a single training step for the given model.
 
@@ -24,8 +29,8 @@ def _train_step(model:nn.Module, train_loader:torch.utils.data.DataLoader, crite
         optimizer (torch.optim.Optimizer): The optimizer used for updating the model's weights.
 
     Returns:
-        float: The average loss for the epoch, calculated as the total loss divided 
-        by the number of samples in the training dataset.
+        (float): The average loss for the epoch, calculated as the total loss divided 
+            by the number of samples in the training dataset.
     """
     model.train()  # Set the model to training mode
 
@@ -48,7 +53,13 @@ def _train_step(model:nn.Module, train_loader:torch.utils.data.DataLoader, crite
 
     return epoch_loss
 
-def train(model:nn.Module, criterion: nn.Module, optimizer:torch.optim.Optimizer, train_loader:torch.utils.data.DataLoader, val_loader:torch.utils.data.DataLoader=None, num_epochs=10) -> None:
+def train(model: nn.Module,
+          criterion: nn.Module,
+          optimizer: torch.optim.Optimizer,
+          train_loader: torch.utils.data.DataLoader,
+          val_loader: Optional[torch.utils.data.DataLoader] = None,
+          num_epochs: Optional[int] = 10,
+          ) -> None:
     """
     Train and optionally validate the given model for a specified number of epochs.
 
@@ -67,7 +78,7 @@ def train(model:nn.Module, criterion: nn.Module, optimizer:torch.optim.Optimizer
 
     Returns:
         None: The function modifies the model in place and records the training 
-        (and validation) results in the model's `results` attribute.
+            (and validation) results in the model's `results` attribute.
     """
     model.to(model.device)
 
@@ -97,13 +108,15 @@ def train(model:nn.Module, criterion: nn.Module, optimizer:torch.optim.Optimizer
 
         plot_training(model)
 
-def plot_training(model, save_path: str = ""):
+def plot_training(model: torch.nn.Module,
+                  save_path: Optional[str] = None) -> None:
     """
     Plots training curves of a results dictionary.
 
     Parameters:
-        model (torch.nn.Module): The model to be ploted. Needs to have the "results" attribute {"train_loss": [...],"val_loss": [...]}
-        save_path (str): path to save the plot as PNG
+        model (torch.nn.Module): The model to be ploted. Needs to have the "results"
+            attribute {"train_loss": [...],"val_loss": [...]}
+        save_path (str, optional): path to save the plot as PNG
     """
     results = model.results
 
@@ -120,7 +133,7 @@ def plot_training(model, save_path: str = ""):
     plt.ylabel('Loss')
     plt.legend()
 
-    if save_path:
+    if save_path is not None:
         plt.savefig(save_path)
     else:
         plt.show()

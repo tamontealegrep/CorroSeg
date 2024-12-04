@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Optional, Union, Tuple, List
+from typing import Self, Optional, Union, Tuple, List
 
 from src.models.operations.train import train
 from src.models.operations.evaluate import evaluate
@@ -130,7 +130,7 @@ class Network(nn.Module):
         }, path)
 
     @classmethod
-    def load_model(cls, path: str):
+    def load_model(cls, path: str) -> Self:
         """
         Static method to load a model from a file and create an instance from the saved configuration.
         This method uses the configuration dictionary and the from_dict method to create the model.
@@ -154,7 +154,7 @@ class Network(nn.Module):
         return network
     
     @staticmethod
-    def from_dict(config_dict):
+    def from_dict(config_dict) -> Self:
         """
         Creates a model instance from a configuration dictionary.
         

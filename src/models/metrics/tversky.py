@@ -1,22 +1,28 @@
 
 import torch
 import torch.nn as nn
+from typing import Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def tversky_index(outputs:torch.Tensor, targets:torch.Tensor, alpha:float=0.5, beta:float=0.5, smooth:float=1e-6) -> float:
+def tversky_index(outputs: torch.Tensor,
+                  targets: torch.Tensor,
+                  alpha: Optional[float] = 0.5,
+                  beta: Optional[float] = 0.5,
+                  smooth: Optional[float] = 1e-6,
+                  ) -> float:
     """
     Calculate the Tversky index between the predicted outputs and the ground truth targets.
 
     Args:
         outputs (torch.Tensor): Predicted outputs after applying sigmoid, shape (N,).
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
-        alpha (float): Weight for false positives.
-        beta (float): Weight for false negatives.
-        smooth (float): Small constant to avoid division by zero.
+        alpha (float, optional): Weight for false positives.
+        beta (float, optional): Weight for false negatives.
+        smooth (float, optional): Small constant to avoid division by zero.
 
     Returns:
-        float: Tversky index value.
+        (float): Tversky index value.
     """
     intersection = (outputs * targets).sum()
     false_positive = ((1 - targets) * outputs).sum()
@@ -29,12 +35,15 @@ class TverskyLoss(nn.Module):
     Tversky Loss function, designed for imbalanced class segmentation tasks.
 
     Args:
-        alpha (float): Weight for false positives.
-        beta (float): Weight for false negatives.
-        smooth (float): Small constant to avoid division by zero.
+        alpha (float, optional): Weight for false positives.
+        beta (float, optional): Weight for false negatives.
+        smooth (float, optional): Small constant to avoid division by zero.
     """
 
-    def __init__(self, alpha:float=0.5, beta:float=0.5, smooth:float=1e-6):
+    def __init__(self,
+                 alpha: Optional[float] = 0.5,
+                 beta: Optional[float] = 0.5,
+                 smooth: Optional[float] =1e-6):
         super(TverskyLoss, self).__init__()
         self.alpha = alpha
         self.beta = beta

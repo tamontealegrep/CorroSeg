@@ -1,20 +1,24 @@
 
 import torch
 import torch.nn as nn
+from typing import Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def iou_index(outputs:torch.Tensor, targets:torch.Tensor, smooth:float=1e-6) -> float:
+def iou_index(outputs: torch.Tensor,
+              targets: torch.Tensor,
+              smooth: Optional[float] = 1e-6,
+              ) -> float:
     """
     Calculate the IoU (Intersection over Union) index between the predicted outputs and the ground truth targets.
 
-    Args:
+    Parameters:
         outputs (torch.Tensor): Predicted outputs after applying sigmoid, shape (N,).
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
-        smooth (float): Small constant to avoid division by zero.
+        smooth (float, optional): Small constant to avoid division by zero.
 
     Returns:
-        float: IoU index value.
+        (float): IoU index value.
     """
     intersection = (outputs * targets).sum()
     total = outputs.sum() + targets.sum()  # Union
@@ -25,11 +29,11 @@ class IoULoss(nn.Module):
     """
     IoU (Intersection over Union) Loss function, designed for imbalanced class segmentation tasks.
 
-    Args:
-        smooth (float): Small constant to avoid division by zero.
+    Parameters:
+        smooth (float, optional): Small constant to avoid division by zero.
     """
 
-    def __init__(self, smooth:float=1e-6):
+    def __init__(self, smooth: Optional[float] = 1e-6):
         super(IoULoss, self).__init__()
         self.smooth = smooth
 

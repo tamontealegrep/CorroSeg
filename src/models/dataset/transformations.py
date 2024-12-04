@@ -1,21 +1,24 @@
 
 import cv2
 import numpy as np
+from typing import Optional, Tuple, Union
 
 #---------------------------------------------------------------------------------------------------
 
-def vertical_reflection(X, y):
+def vertical_reflection(X: np.ndarray,
+                        y: np.ndarray,
+                        ) -> Tuple[np.ndarray,np.ndarray]:
     """
     Perform vertical reflection (flipping) on input arrays X and y.
 
-    Args:
-        X (np.ndarray): Input array of shape (h, w) or (n, h, w).
+    Parameters:
+        X (np.ndarray): Input array of shape (h, w) or (num_samples, h, w).
         y (np.ndarray): Target array of the same shape as X.
 
     Returns:
-        tuple: A tuple containing:
-            - X_reflected (np.ndarray): Vertically reflected input samples.
-            - y_reflected (np.ndarray): Vertically reflected target samples.
+        (tuple): A tuple containing.
+            X_reflected (np.ndarray): Vertically reflected input samples.
+            y_reflected (np.ndarray): Vertically reflected target samples.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
@@ -29,22 +32,24 @@ def vertical_reflection(X, y):
         y_reflected = np.array([np.flipud(i) for i in y])
 
     else:
-        raise ValueError("X and y must be a 2 or 3 dimensional array")
+        raise ValueError("Input array X must be of shape (h, w) or (num_samples, h, w)")
 
     return X_reflected, y_reflected
 
-def horizontal_reflection(X, y):
+def horizontal_reflection(X: np.ndarray,
+                          y: np.ndarray,
+                          ) -> Tuple[np.ndarray,np.ndarray]:
     """
     Perform horizontal reflection (flipping) on input arrays X and y.
 
-    Args:
-        X (np.ndarray): Input array of shape (h, w) or (n, h, w).
+    Parameters:
+        X (np.ndarray): Input array of shape (h, w) or (num_samples, h, w).
         y (np.ndarray): Target array of the same shape as X.
 
     Returns:
-        tuple: A tuple containing:
-            - X_reflected (np.ndarray): Horizontally reflected input samples.
-            - y_reflected (np.ndarray): Horizontally reflected target samples.
+        (tuple): A tuple containing.
+            X_reflected (np.ndarray): Horizontally reflected input samples.
+            y_reflected (np.ndarray): Horizontally reflected target samples.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
@@ -58,26 +63,32 @@ def horizontal_reflection(X, y):
         y_reflected = np.array([np.fliplr(i) for i in y])
 
     else:
-        raise ValueError("X and y must be a 2 or 3 dimensional array")
+        raise ValueError("Input array X must be of shape (h, w) or (num_samples, h, w)")
 
     return X_reflected, y_reflected
 
-def gaussian_noise(X, y, alpha=0.1):
+def gaussian_noise(X: np.ndarray,
+                   y: np.ndarray,
+                   alpha: Optional[float] = 0.1,
+                   ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Add Gaussian noise to the input image.
+    Add Gaussian noise to the input array.
 
-    Args:
-        X (np.ndarray): Input image array of shape (h, w) or (n, h, w).
-        y (np.ndarray): Input label array of the same shape as X.
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
+        y (np.ndarray): Input target array of the same shape as X.
         alpha (float, optional): Standard deviation of the Gaussian noise to be added. Default is 0.1.
 
     Returns:
-        tuple: A tuple containing:
-            - X_noisy (np.ndarray): The input sample with Gaussian noise added.
-            - y (np.ndarray): The target sample unchanged.
+        (tuple): A tuple containing.
+            X_noisy (np.ndarray): The input feature array with Gaussian noise added.
+            y (np.ndarray): The target array  unchanged.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
+    
+    if alpha < 0:
+        raise ValueError("alpha must be a no negative number")
     
     # Generate Gaussian noise
     noise = np.random.normal(0, alpha, X.shape)
@@ -89,26 +100,39 @@ def gaussian_noise(X, y, alpha=0.1):
 
     return X_noisy, y
 
-def salt_and_pepper_noise(X, y, salt_prob=0.025, pepper_prob=0.025, salt_value=1, pepper_value=0, noise_variation=1):
+def salt_and_pepper_noise(X: np.ndarray,
+                          y: np.ndarray,
+                          salt_prob: Optional[float] = 0.025,
+                          pepper_prob: Optional[float] = 0.025,
+                          salt_value: Optional[Union[int, float]] = 1,
+                          pepper_value: Optional[Union[int, float]] = 0,
+                          noise_variation: Optional[Union[int, float]] = 1,
+                          ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Adds salt and pepper noise to the input image and label.
+    Adds salt and pepper noise to the input feature array.
 
-    Args:
-        X (np.ndarray): Input array of shape (h, w) or (n, h, w).
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
         y (np.ndarray): Target array of the same shape as X.
         salt_prob (float, optional): Probability of salt noise (high values). Default is 0.025.
         pepper_prob (float, optional): Probability of pepper noise (low values). Default is 0.025.
-        salt_value (int, optional): Value to be used for salt noise. Default is 1.
-        pepper_value (int, optional): Value to be used for pepper noise. Default is 0.
-        noise_variation (int, optional): Variation range for randomizing salt and pepper values. Default is 1.
+        salt_value (Union[int, float], optional): Value to be used for salt noise. Default is 1.
+        pepper_value (Union[int, float], optional): Value to be used for pepper noise. Default is 0.
+        noise_variation (Union[int, float], optional): Variation range for randomizing salt and pepper values. Default is 1.
 
     Returns:
         tuple: A tuple containing:
-            - X_noisy (np.ndarray): The input sample with salt and pepper noise added.
-            - y (np.ndarray): The target sample unchanged.
+            - X_noisy (np.ndarray): The input array with salt and pepper noise added.
+            - y (np.ndarray): The target array unchanged.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
+    
+    if salt_prob < 0 or salt_prob > 1:
+        raise ValueError("salt_prob must be a value between 0 and 1")
+    
+    if pepper_prob < 0 or pepper_prob > 1:
+        raise ValueError("pepper_prob must be a value between 0 and 1")
     
     X_noisy = X.copy()
 
@@ -123,7 +147,7 @@ def salt_and_pepper_noise(X, y, salt_prob=0.025, pepper_prob=0.025, salt_value=1
         salt_mask = np.random.rand(n, h, w) < salt_prob
         pepper_mask = np.random.rand(n, h, w) < pepper_prob
     else:
-        raise ValueError("Input array X must be of shape (h, w) or (n, h, w)")
+        raise ValueError("Input array X must be of shape (h, w) or (num_samples, h, w)")
 
 
     X_noisy[salt_mask] = np.random.uniform(salt_value - noise_variation, salt_value + noise_variation, size=np.sum(salt_mask))
@@ -132,24 +156,40 @@ def salt_and_pepper_noise(X, y, salt_prob=0.025, pepper_prob=0.025, salt_value=1
 
     return X_noisy, y
 
-def cutout(X, y, min_area_fraction=0.2, max_area_fraction=0.5, value=0):
+def cutout(X: np.ndarray,
+           y: np.ndarray,
+           min_area_fraction: Optional[float] = 0.2,
+           max_area_fraction: Optional[float] = 0.5,
+           value: Optional[Union[int, float]] = 0,
+           ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Crop a random area from the image and replace it with a specified value.
+    Crop a random area from the array and replace it with a specified value.
 
-    Args:
-        X (np.ndarray): Input image array of shape (h, w) or (n, h, w).
-        y (np.ndarray): Input label array of the same shape as X.
-        min_area_fraction (float, optional): Minimum fraction of the image area that can be hidden. Must be a value between 0 and 1. Default is 0.2.
-        max_area_fraction (float, optional): Maximum fraction of the image area that can be hidden. Must be a value between 0 and 1. Default is 0.5.
-        value (int, optional): Value to replace the cropped area. Default is 0.
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
+        y (np.ndarray): Input target array of the same shape as X.
+        min_area_fraction (float, optional): Minimum fraction of the array area that can be hidden. 
+            Must be a value between 0 and 1. Default is 0.2.
+        max_area_fraction (float, optional): Maximum fraction of the array area that can be hidden. 
+            Must be a value between 0 and 1. Default is 0.5.
+        value (Union[int, float], optional): Value to replace the cropped area. Default is 0.
 
     Returns:
-        tuple: A tuple containing:
-            - X_cropped (np.ndarray): The input sample with the random area set to the specified value.
-            - y (np.ndarray): The target sample unchanged.
+        (tuple): A tuple containing.
+            X_cropped (np.ndarray): The input feature array with the random area set to the specified value.
+            y (np.ndarray): The target array unchanged.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
+    
+    if min_area_fraction < 0 or min_area_fraction > 1:
+        raise ValueError("min_area_fraction must be a value between 0 and 1")
+    
+    if max_area_fraction < 0 or max_area_fraction > 1:
+        raise ValueError("max_area_fraction must be a value between 0 and 1")
+    
+    if max_area_fraction < min_area_fraction:
+        raise ValueError("max_area_fraction must be greater than min_area_fraction")
     
     # Determine the shape
     n = X.shape[0] if X.ndim == 3 else 1
@@ -178,23 +218,31 @@ def cutout(X, y, min_area_fraction=0.2, max_area_fraction=0.5, value=0):
 
     return X_cropped, y
 
-def resize_and_pad(X, y, min_scale=0.8, max_scale=1.2, padding_value_x=0, padding_value_y=0):
+def resize_and_pad(X: np.ndarray,
+                   y: np.ndarray,
+                   min_scale: Optional[float] = 0.8,
+                   max_scale: Optional[float] = 1.2,
+                   padding_value_x: Optional[Union[int, float]] = 0,
+                   padding_value_y: Optional[Union[int, float]] = 0,
+                   ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Resize the input image and label randomly within the specified scale range,
+    Resize the input feature and target arrays randomly within the specified scale range,
     and pad them if they are smaller than the original size, centering the content.
 
-    Args:
-        X (np.ndarray): Input image array of shape (h, w) or (n, h, w).
-        y (np.ndarray): Input label array of the same shape as X.
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
+        y (np.ndarray): Target array of the same shape as X.
         min_scale (float, optional): Minimum scaling factor (for shrinking). Default is 0.8.
         max_scale (float, optional): Maximum scaling factor (for enlarging). Default is 1.2.
-        padding_value_x (int or float, optional): Value to pad the image if it's smaller than original. Default is 0.
-        padding_value_y (int or float, optional): Value to pad the label if it's smaller than original. Default is 0.
+        padding_value_x (Union[int, float], optional): Value to pad the feature array if it's 
+            smaller than original. Default is 0.
+        padding_value_y (Union[int, float], optional): Value to pad the target array if it's
+            smaller than original. Default is 0.
 
     Returns:
-        tuple: A tuple containing:
-            - X_resized (np.ndarray): The resized (and possibly padded) image.
-            - y_resized (np.ndarray): The resized (and possibly padded) label.
+        (tuple): A tuple containing.
+            X_resized (np.ndarray): The resized (and possibly padded) feature array.
+            y_resized (np.ndarray): The resized (and possibly padded) target array.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
@@ -241,8 +289,10 @@ def resize_and_pad(X, y, min_scale=0.8, max_scale=1.2, padding_value_x=0, paddin
             pad_left = pad_width // 2
             pad_right = pad_width - pad_left
             
-            X_resized_single = np.pad(X_resized_single, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=padding_value_x)
-            y_resized_single = np.pad(y_resized_single, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=padding_value_y)
+            X_resized_single = np.pad(X_resized_single, ((pad_top, pad_bottom), (pad_left, pad_right)),
+                                      mode='constant', constant_values=padding_value_x)
+            y_resized_single = np.pad(y_resized_single, ((pad_top, pad_bottom), (pad_left, pad_right)),
+                                      mode='constant', constant_values=padding_value_y)
 
         # Store the resized results
         if n > 1:
@@ -254,22 +304,33 @@ def resize_and_pad(X, y, min_scale=0.8, max_scale=1.2, padding_value_x=0, paddin
 
     return X_resized, y_resized
 
-def rotate_and_pad(X, y, min_angle=-30, max_angle=30, padding_value_x=0, padding_value_y=0):
+def rotate_and_pad(X: np.ndarray,
+                   y: np.ndarray,
+                   min_angle: Optional[Union[int, float]] = -30,
+                   max_angle: Optional[Union[int, float]] = 30,
+                   padding_value_x: Optional[Union[int, float]] = 0,
+                   padding_value_y: Optional[Union[int, float]] = 0,
+                   ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Rotate the input image and label by a random angle, and pad them if they are smaller than the original size.
+    Rotate the input feature and target array by a random angle, 
+    and pad them if they are smaller than the original size.
 
-    Args:
-        X (np.ndarray): Input image array of shape (h, w) or (n, h, w).
-        y (np.ndarray): Input label array of the same shape as X.
-        min_angle (float): Minimum angle in degrees to rotate the image and label.
-        max_angle (float): Maximum angle in degrees to rotate the image and label.
-        padding_value_x (int or float, optional): Value to pad the image if it's smaller than original. Default is 0.
-        padding_value_y (int or float, optional): Value to pad the label if it's smaller than original. Default is 0.
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
+        y (np.ndarray): Target array of the same shape as X.
+        min_angle (Union[int, float], optional): Minimum angle in degrees to rotate 
+            the feature and target arrays.
+        max_angle (Union[int, float], optional): Maximum angle in degrees to rotate 
+            the feature and target arrays.
+        padding_value_x (Union[int, float], optional): Value to pad the feature array if it's
+            smaller than original. Default is 0.
+        padding_value_y (Union[int, float], optional): Value to pad the target array if it's
+            smaller than original. Default is 0.
 
     Returns:
-        tuple: A tuple containing:
-            - X_rotated (np.ndarray): The rotated and padded image.
-            - y_rotated (np.ndarray): The rotated and padded label.
+        (tuple): A tuple containing.
+            X_rotated (np.ndarray): The rotated and padded image.
+            y_rotated (np.ndarray): The rotated and padded label.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
@@ -310,8 +371,10 @@ def rotate_and_pad(X, y, min_angle=-30, max_angle=30, padding_value_x=0, padding
             pad_left = pad_width // 2
             pad_right = pad_width - pad_left
             
-            X_rotated_i = np.pad(X_rotated_i, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=padding_value_x)
-            y_rotated_i = np.pad(y_rotated_i, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=padding_value_y)
+            X_rotated_i = np.pad(X_rotated_i, ((pad_top, pad_bottom), (pad_left, pad_right)),
+                                 mode='constant', constant_values=padding_value_x)
+            y_rotated_i = np.pad(y_rotated_i, ((pad_top, pad_bottom), (pad_left, pad_right)),
+                                 mode='constant', constant_values=padding_value_y)
 
         # Store the rotated results
         if n > 1:
@@ -325,17 +388,29 @@ def rotate_and_pad(X, y, min_angle=-30, max_angle=30, padding_value_x=0, padding
 
 #---------------------------------------------------------------------------------------------------
 
-def random_transformation(X,y,gaussian_alpha,salt_pepper_prob,salt_value,pepper_value,cutout_min,cutout_max,resize_min,resize_max,rotation_min,rotation_max):
+def random_transformation(X: np.ndarray,
+                          y: np.ndarray,
+                          gaussian_alpha: float,
+                          salt_pepper_prob: float,
+                          salt_value: Union[int, float],
+                          pepper_value: Union[int, float],
+                          cutout_min: float,
+                          cutout_max: float,
+                          resize_min: float,
+                          resize_max: float,
+                          rotation_min: Union[int, float],
+                          rotation_max: Union[int, float],
+                          ) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Apply a series of random transformations to the input images and labels.
+    Apply a series of random transformations to the input feature and target arrays.
 
     The transformations include vertical and horizontal reflections, adding Gaussian noise,
     applying salt and pepper noise, cutout augmentation, resizing with padding, and rotation 
     with padding. Each transformation has a probability of being applied.
 
-    Args:
-        X (np.ndarray): Input image array of shape (h, w) or (n, h, w).
-        y (np.ndarray): Input label array of the same shape as X.
+    Parameters:
+        X (np.ndarray): Input feature array of shape (h, w) or (num_samples, h, w).
+        y (np.ndarray): Target array of the same shape as X.
         gaussian_alpha (float): Standard deviation of the Gaussian noise to be added.
         salt_pepper_prob (float): Probability of applying salt and pepper noise.
         salt_value (int or float): Value to use for salt noise.
@@ -348,9 +423,9 @@ def random_transformation(X,y,gaussian_alpha,salt_pepper_prob,salt_value,pepper_
         rotation_max (int or float): Maximum rotation angle.
 
     Returns:
-        tuple: A tuple containing:
-            - X (np.ndarray): Transformed input images.
-            - y (np.ndarray): Corresponding labels, unchanged.
+        (tuple): A tuple containing.
+            X (np.ndarray): Transformed feature array.
+            y (np.ndarray): Transformed target array.
     """
     if X.shape != y.shape:
         raise ValueError("X and y must have the same dimentions")
@@ -366,7 +441,8 @@ def random_transformation(X,y,gaussian_alpha,salt_pepper_prob,salt_value,pepper_
         (lambda X, y: vertical_reflection(X, y), 0.25),
         (lambda X, y: horizontal_reflection(X, y), 0.25),
         (lambda X, y: gaussian_noise(X, y, gaussian_alpha), 0.25),
-        (lambda X, y: salt_and_pepper_noise(X, y, salt_pepper_prob, salt_pepper_prob, salt_value, pepper_value), 0.25),
+        (lambda X, y: salt_and_pepper_noise(X, y, salt_pepper_prob, 
+                                            salt_pepper_prob, salt_value, pepper_value), 0.25),
         (lambda X, y: cutout(X, y, cutout_min, cutout_max), 0.25),
         (lambda X, y: resize_and_pad(X, y, resize_min, resize_max), 0),
         (lambda X, y: rotate_and_pad(X, y, rotation_min, rotation_max), 0.25),

@@ -7,7 +7,10 @@ from torch.utils.data import Dataset, DataLoader
 
 #---------------------------------------------------------------------------------------------------
 
-def _evaluation_step(model:nn.Module, eval_loader:torch.utils.data.DataLoader, criterion:nn.Module) -> float:
+def _evaluation_step(model: nn.Module,
+                     eval_loader: torch.utils.data.DataLoader,
+                     criterion: nn.Module,
+                     ) -> float:
     """
     Perform a single evaluation step for the given model.
 
@@ -21,8 +24,8 @@ def _evaluation_step(model:nn.Module, eval_loader:torch.utils.data.DataLoader, c
         criterion (torch.nn.Module)): The loss function used to compute the evaluation loss.
 
     Returns:
-        float: The average loss for the evaluation set, calculated as the total loss
-        divided by the number of samples in the evaluation dataset.
+        (float): The average loss for the evaluation set, calculated as the total loss
+            divided by the number of samples in the evaluation dataset.
     """
     model.eval()
 
@@ -41,7 +44,10 @@ def _evaluation_step(model:nn.Module, eval_loader:torch.utils.data.DataLoader, c
 
     return epoch_loss
 
-def evaluate_dataset(model: nn.Module, dataset: torch.utils.data.Dataset, criterion: nn.Module) -> Tuple[np.ndarray, List[float], float]:
+def evaluate_dataset(model: nn.Module,
+                     dataset: torch.utils.data.Dataset,
+                     criterion: nn.Module,
+                     ) -> Tuple[np.ndarray, List[float], float]:
     """
     Evaluate the model on the evaluation dataset.
 
@@ -57,7 +63,7 @@ def evaluate_dataset(model: nn.Module, dataset: torch.utils.data.Dataset, criter
         criterion (nn.Module): The loss function used to compute the loss.
 
     Returns:
-        tuple: A tuple containing.
+        (tuple): A tuple containing.
             outputs (numpy.ndarray): predictions for each sample.
             losses (list): List of individual losses for each sample.
             average_loss (float): Average loss for the evaluation dataset.
@@ -87,7 +93,10 @@ def evaluate_dataset(model: nn.Module, dataset: torch.utils.data.Dataset, criter
 
     return np.concatenate(outputs, axis=0), losses, average_loss
 
-def evaluate_dataloader(model: nn.Module, dataloader: torch.utils.data.DataLoader, criterion: nn.Module) -> Tuple[np.ndarray, List[float], float]:
+def evaluate_dataloader(model: nn.Module,
+                        dataloader: torch.utils.data.DataLoader,
+                        criterion: nn.Module,
+                        ) -> Tuple[np.ndarray, List[float], float]:
     """
     Evaluate the model on the evaluation dataset.
 
@@ -103,7 +112,7 @@ def evaluate_dataloader(model: nn.Module, dataloader: torch.utils.data.DataLoade
         criterion (nn.Module): The loss function used to compute the loss.
 
     Returns:
-        tuple: A tuple containing.
+        (tuple): A tuple containing.
             outputs (numpy.ndarray): predictions for each sample.
             losses (list): List of individual losses for each sample.
             average_loss (float): Average loss for the evaluation dataset.
@@ -131,7 +140,10 @@ def evaluate_dataloader(model: nn.Module, dataloader: torch.utils.data.DataLoade
 
     return np.concatenate(outputs, axis=0), losses, average_loss
 
-def evaluate(model: nn.Module, data: Union[Dataset, DataLoader], criterion: nn.Module) -> Tuple[np.ndarray, List[float], float]:
+def evaluate(model: nn.Module,
+             data: Union[Dataset, DataLoader],
+             criterion: nn.Module,
+             ) -> Tuple[np.ndarray, List[float], float]:
     """
     Evaluate the model on the provided dataset or dataloader using the specified loss function.
 
@@ -147,7 +159,7 @@ def evaluate(model: nn.Module, data: Union[Dataset, DataLoader], criterion: nn.M
         criterion (nn.Module): The loss function used to compute the loss.
 
     Returns:
-        tuple: A tuple containing:
+        (tuple): A tuple containing:
             - outputs (numpy.ndarray): predictions for each sample.
             - losses (list): List of individual losses for each sample.
             - average_loss (float): Average loss for the evaluation dataset.

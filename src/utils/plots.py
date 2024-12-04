@@ -8,18 +8,19 @@ from typing import Tuple, Union, Optional
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 def plot_data(X: np.ndarray,
-              y: np.ndarray = None,
-              z: np.ndarray = None,
-              X_range: tuple = (-0.2, 0.2),
-              y_range: tuple = (0, 1),
-              X_cmap: str = "gray",
-              y_cmap: str = "viridis",
-              vertical_range: tuple = None,
-              figsize: tuple = (5, 5)):
+              y: Optional[np.ndarray] = None,
+              z: Optional[np.ndarray] = None,
+              X_range: Optional[tuple] = (-0.2, 0.2),
+              y_range: Optional[tuple] = (0, 1),
+              X_cmap: Optional[str] = "gray",
+              y_cmap: Optional[str] = "viridis",
+              vertical_range: Optional[tuple] = None,
+              figsize: Optional[tuple] = (5, 5),
+              ) -> None:
     """
     Visualize X (features), y (mask), and optionally z (predictions) side by side.
 
-    Args:
+    Parameters:
         X (numpy.ndarray): Features 2D array.
         y (numpy.ndarray, optional): Target 2D array. If None, only X will be visualized.
         z (numpy.ndarray, optional): Predictions 2D array. If None, only X and y (if provided) will be visualized.
@@ -78,12 +79,13 @@ def plot_data(X: np.ndarray,
 
 def plot_sample(X: np.ndarray,
                 y: np.ndarray,
-                X_range=(-1, 1),
-                y_range=(0, 1),
-                X_cmap: str = "gray",
-                y_cmap: str = "viridis",
-                sample_id=None,
-                figsize=(10, 10)):
+                X_range: Optional[tuple] = (-1, 1),
+                y_range: Optional[tuple] = (0, 1),
+                X_cmap: Optional[str] = "gray",
+                y_cmap: Optional[str] = "viridis",
+                sample_id: Optional[int] = None,
+                figsize: Optional[tuple] = (10, 10),
+                ) -> None:
     """
     Plot a sample image and its corresponding mask.
 

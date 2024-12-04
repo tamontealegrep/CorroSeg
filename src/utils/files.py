@@ -3,15 +3,16 @@ import os
 import yaml
 import pickle
 import numpy as np
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def save_pkl(obj:Any, file_path:str) -> None:
+def save_pkl(obj: Any,
+             file_path: str) -> None:
     """
     Save an object to a pickle file.
 
-    Args:
+    Parameters:
         obj(Any): The object to be serialized and saved.
         file_path (str): The path to the file where the object will be saved.
 
@@ -21,11 +22,11 @@ def save_pkl(obj:Any, file_path:str) -> None:
     with open(file_path, 'wb') as file:
         pickle.dump(obj, file)
 
-def load_pkl(file_path:str) -> Any:
+def load_pkl(file_path: str) -> Any:
     """
     Load an object from a pickle file.
 
-    Args:
+    Parameters:
         file_path (str): The path to the file from which the object will be loaded.
 
     Returns:
@@ -34,11 +35,11 @@ def load_pkl(file_path:str) -> Any:
     with open(file_path, 'rb') as file:
         return pickle.load(file)
 
-def load_config(file_path:str) -> dict:
+def load_config(file_path: str) -> dict:
     """
     Load configuration from a YAML file.
 
-    Args:
+    Parameters:
         file_path (str): The path to the YAML file to be loaded.
 
     Returns:
@@ -52,7 +53,10 @@ def load_config(file_path:str) -> dict:
         config = yaml.safe_load(file)
     return config
 
-def save_dict_arrays(folder_path:str, X:dict, y:dict=None) -> None:
+def save_dict_arrays(folder_path: str,
+                     X: dict,
+                     y: Optional[dict] = None,
+                     ) -> None:
     """
     Save two lists of arrays to specified folders as .npy files.
 
