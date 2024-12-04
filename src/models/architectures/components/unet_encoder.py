@@ -9,7 +9,7 @@ class UnetEncoder(nn.Module):
     """
     An encoder for U-Net architecture that applies specified convolutional blocks followed by max pooling.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         base_channels (int): Base number of output channels, will be multiplied by powers of 2 for each layer.
         num_layers (int): Number of layers in the encoder.

@@ -27,12 +27,13 @@ class UnetSkipConnections(nn.Module):
         base_channels (int): Base number of output channels.
         
     Forward Pass:
-        The input list of tensors (skip connections) is processed through each block in sequence. Each block performs upsampling on the input tensor,
-        concatenates it with the corresponding skip connection, applies the specified convolutional operations, and updates the skip connection with the resulting output by concatenation.
+        The input list of tensors (skip connections) is processed through each block in sequence. 
+        Each block performs upsampling on the input tensor,concatenates it with the corresponding skip connection, 
+        applies the specified convolutional operations, and updates the skip connection with the resulting output by concatenation.
         Finally, the output tensor from the last block is returned.
 
     Returns:
-        List[torch.Tensor]: A list of output tensors after applying all blocks, including the concatenated skip connections.
+        (List[torch.Tensor]): A list of output tensors after applying all blocks, including the concatenated skip connections.
     """
 
     def __init__(self, 

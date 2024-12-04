@@ -18,7 +18,7 @@ class ViTUnet(Network):
     """
     U-Net architecture combining encoder, bottleneck, and decoder components, whith a ViT feature extractor.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         output_channels (int): Number of output channels.
         input_height (int): Height of the input tensors.
@@ -41,7 +41,8 @@ class ViTUnet(Network):
         decoder_kwargs (Dict, optional): Additional arguments for the decoder blocks.
         skip_connections_kwargs Dict, optional): Additional arguments for the skip connection blocks.
         attention_gates (float, optional): Whether or not use attention gates in the skep connection blocks. Default False.
-        output_activation (str, optional): The activation function to apply to the output of the network. This function is applied after the final convolution layer. Default is "".
+        output_activation (str, optional): The activation function to apply to the output of the network. 
+            This function is applied after the final convolution layer. Default is "".
 
     Attributes:
         extractor (ViTFeatureExtractor): The feature extractor based on ViT.
@@ -117,17 +118,55 @@ class ViTUnet(Network):
         decoder_kwargs = decoder_kwargs or {}
         skip_connections_kwargs = skip_connections_kwargs or {}
 
-        self.extractor = ViTFeatureExtractor(input_channels, input_height, input_width, patch_height, patch_width, embed_dim, num_vit_layers, num_vit_heads, extractor_block_type, **extractor_kwargs)
+        self.extractor = ViTFeatureExtractor(
+            input_channels,
+            input_height,
+            input_width,
+            patch_height,
+            patch_width,
+            embed_dim,
+            num_vit_layers,
+            num_vit_heads,
+            extractor_block_type,
+            **extractor_kwargs)
         
-        self.encoder = UnetEncoder(input_channels, base_unet_channels, num_unet_layers, encoder_block_type, **encoder_kwargs)
-        self.bottleneck = UnetBottleneck(base_unet_channels, num_unet_layers, bottleneck_block_type, **bottleneck_kwargs)
+        self.encoder = UnetEncoder(
+            input_channels,
+            base_unet_channels,
+            num_unet_layers,
+            encoder_block_type, 
+            **encoder_kwargs)
+        
+        self.bottleneck = UnetBottleneck(
+            base_unet_channels,
+            num_unet_layers,
+            bottleneck_block_type,
+            **bottleneck_kwargs)
         
         if skip_connections_block_type is not None:
-            self.skip_connections = UnetSkipConnections(base_unet_channels, num_unet_layers, skip_connections_block_type, attention_gates=attention_gates, **skip_connections_kwargs)
-            self.decoder = UnetDecoder(base_unet_channels, num_unet_layers, decoder_block_type, attention_gates=attention_gates, cross_level_skip=True, **decoder_kwargs)
+            self.skip_connections = UnetSkipConnections(
+                base_unet_channels,
+                num_unet_layers,
+                skip_connections_block_type,
+                attention_gates=attention_gates,
+                **skip_connections_kwargs)
+            
+            self.decoder = UnetDecoder(
+                base_unet_channels,
+                num_unet_layers,
+                decoder_block_type,
+                attention_gates=attention_gates,
+                cross_level_skip=True,
+                **decoder_kwargs)
+            
         else:
             self.skip_connections = None
-            self.decoder = UnetDecoder(base_unet_channels, num_unet_layers, decoder_block_type, attention_gates=attention_gates, **decoder_kwargs)
+            self.decoder = UnetDecoder(
+                base_unet_channels,
+                num_unet_layers,
+                decoder_block_type,
+                attention_gates=attention_gates,
+                **decoder_kwargs)
 
         self.final_conv = nn.Conv2d(base_unet_channels, output_channels, kernel_size=1)
         self.output_activation = get_activation_function(output_activation) if output_activation != "" else None
@@ -136,7 +175,7 @@ class ViTUnet(Network):
         """
         Forward pass through the ViTUnet architecture.
 
-        Args:
+        Parameters:
             x (torch.Tensor): Input tensor.
 
         Returns:
@@ -162,59 +201,11 @@ class ViTUnet(Network):
         return x
     
     @staticmethod
-    def load_model(path):
-        """
-        Loads a model from a file, reconstructing the architecture
-        based on the saved configuration and loading the model weights.
-
-        Args:
-            path (str): The path to the model file to load.
-
-        Returns:
-            Unet: The model with the loaded weights and configuration.
-        """
-        checkpoint = torch.load(path)
-        network_config = checkpoint["network_config"]
-        network_state_dict = checkpoint["network_state_dict"]
-        network_results = checkpoint["network_results"]
-
-        model = ViTUnet(
-            input_channels=network_config["input_channels"],
-            output_channels=network_config["output_channels"],
-            input_height=network_config["input_height"],
-            input_width=network_config["input_width"],
-            patch_height=network_config["patch_height"],
-            patch_width=network_config["patch_width"],
-            embed_dim=network_config["embed_dim"],
-            num_vit_layers=network_config["num_vit_layers"],
-            num_vit_heads=network_config["num_vit_heads"],
-            base_unet_channels=network_config["base_unet_channels"],
-            num_unet_layers=network_config["num_unet_layers"],
-            extractor_block_type=eval(network_config["extractor_block_type"]),
-            encoder_block_type=eval(network_config["encoder_block_type"]),
-            bottleneck_block_type=eval(network_config["bottleneck_block_type"]),
-            decoder_block_type=eval(network_config["decoder_block_type"]),
-            skip_connections_block_type=eval(network_config["skip_connections_block_type"]) if network_config["skip_connections_block_type"] else None,
-            extractor_kwargs=network_config["extractor_kwargs"],
-            encoder_kwargs=network_config["encoder_kwargs"],
-            bottleneck_kwargs=network_config["bottleneck_kwargs"],
-            decoder_kwargs=network_config["decoder_kwargs"],
-            skip_connections_kwargs=network_config["skip_connections_kwargs"],
-            attention_gates=network_config["attention_gates"],
-            output_activation=network_config["output_activation"],
-        )
-
-        model.load_state_dict(network_state_dict)
-        model.results = network_results
-
-        return model
-    
-    @staticmethod
     def from_dict(config_dict):
         """
         Creates a ViTUnet model instance from the provided configuration dictionary.
 
-        Args:
+        Parameters:
             config_dict (dict): A dictionary containing the model's configuration.
 
         Returns:
@@ -236,7 +227,9 @@ class ViTUnet(Network):
             encoder_block_type=eval(config_dict["encoder_block_type"]),
             bottleneck_block_type=eval(config_dict["bottleneck_block_type"]),
             decoder_block_type=eval(config_dict["decoder_block_type"]),
-            skip_connections_block_type=eval(config_dict["skip_connections_block_type"]) if config_dict["skip_connections_block_type"] else None,
+            skip_connections_block_type=(eval(config_dict["skip_connections_block_type"]) 
+                                         if config_dict["skip_connections_block_type"] 
+                                         else None),
             extractor_kwargs=config_dict["extractor_kwargs"],
             encoder_kwargs=config_dict["encoder_kwargs"],
             bottleneck_kwargs=config_dict["bottleneck_kwargs"],

@@ -7,9 +7,10 @@ from typing import Optional, Tuple
 
 class MultiHeadAttention(nn.Module):
     """
-    A module that implements multi-head attention mechanism, commonly used in transformer architectures to enhance the representation of input sequences.
+    A module that implements multi-head attention mechanism, commonly used in transformer architectures to 
+    enhance the representation of input sequences.
 
-    Args:
+    Parameters:
         embed_dim (int): The size of the input embedding vector.
         num_heads (int): The number of attention heads. Must divide embed_dim evenly.
         average_attention (bool, optional): If True, returns the average attention weights across all heads. Default is False.
@@ -18,7 +19,8 @@ class MultiHeadAttention(nn.Module):
         embed_dim (int): The size of the embedding vector.
         num_heads (int): The number of attention heads.
         head_dim (int): The dimension of each head's key, query, and value.
-        average_attention (bool): If True, attention weights will be averaged across all heads when returned. If False, the attention weights for each head will be returned individually.
+        average_attention (bool): If True, attention weights will be averaged across all heads when returned. 
+            If False, the attention weights for each head will be returned individually.
         W_q (torch.nn.Linear): Linear layer for query transformation.
         W_k (torch.nn.Linear): Linear layer for key transformation.
         W_v (torch.nn.Linear): Linear layer for value transformation.
@@ -49,12 +51,13 @@ class MultiHeadAttention(nn.Module):
         q (torch.Tensor): Input tensor of shape (batch_size, seq_len, embed_dim) for queries.
         k (torch.Tensor): Input tensor of shape (batch_size, seq_len, embed_dim) for keys.
         v (torch.Tensor): Input tensor of shape (batch_size, seq_len, embed_dim) for values.
-        mask (torch.Tensor, optional): A tensor of shape (batch_size, 1, seq_len, seq_len) indicating which elements to attend to (1 for valid, 0 for masked).
+        mask (torch.Tensor, optional): A tensor of shape (batch_size, 1, seq_len, seq_len) 
+            indicating which elements to attend to (1 for valid, 0 for masked).
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-            torch.Tensor: The output tensor after applying multi-head attention and the final linear transformation.
-            torch.Tensor: Attention weights, either averaged across heads or for each head, depending on the average_heads flag.
+        (tuple): A tuple containing.
+            (torch.Tensor): The output tensor after applying multi-head attention and the final linear transformation.
+            (torch.Tensor): Attention weights, either averaged across heads or for each head, depending on the average_heads flag.
     """
     def __init__(self, embed_dim: int, num_heads: int, average_attention:Optional[bool]=False):
         super(MultiHeadAttention, self).__init__()
@@ -74,7 +77,10 @@ class MultiHeadAttention(nn.Module):
         # Define output linear projection
         self.W_o = nn.Linear(embed_dim, embed_dim) #Wo - Output transformation
 
-    def linear_projection(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+    def linear_projection(self,
+                          q: torch.Tensor,
+                          k: torch.Tensor,
+                          v: torch.Tensor) -> torch.Tensor:
         # (batch_size, seq_len, embed_dim) @ (batch_size, embed_dim, embed_dim) --> (batch_size, seq_len, embed_dim)
         Q = self.W_q(q) 
         K = self.W_k(k)
@@ -86,7 +92,12 @@ class MultiHeadAttention(nn.Module):
         batch_size, seq_len, embed_dim = x.size()
         return x.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
     
-    def scaled_dot_product_attention(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: torch.Tensor=None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def scaled_dot_product_attention(self,
+                                     Q: torch.Tensor,
+                                     K: torch.Tensor,
+                                     V: torch.Tensor,
+                                     mask: Optional[torch.Tensor] = None,
+                                     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # (batch_size, num_heads, seq_len, head_dim) @ (batch_size, num_heads, head_dim, seq_len) --> (batch_size, num_heads, seq_len, seq_len)
         attention_scores = torch.matmul(Q, K.transpose(-2, -1)) / torch.sqrt(torch.tensor(self.head_dim, dtype=Q.dtype))
 
@@ -107,7 +118,7 @@ class MultiHeadAttention(nn.Module):
         batch_size, num_heads, seq_len, head_dim = x.size()
         return x.transpose(1, 2).contiguous().view(batch_size, seq_len, self.embed_dim)
 
-    def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: torch.Tensor=None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Performs the forward pass of the multi-head attention mechanism.
 
@@ -120,7 +131,8 @@ class MultiHeadAttention(nn.Module):
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
                 torch.Tensor: The output tensor of shape (batch_size, seq_len, embed_dim).
-                torch.Tensor: Attention weights of shape (batch_size, seq_len, seq_len) if average_attention is True, otherwise (batch_size, num_heads, seq_len, seq_len).
+                torch.Tensor: Attention weights of shape (batch_size, seq_len, seq_len) if average_attention is True, 
+                    otherwise (batch_size, num_heads, seq_len, seq_len).
         """
         # Apply linear projections
         Q, K, V = self.linear_projection(q, k, v)

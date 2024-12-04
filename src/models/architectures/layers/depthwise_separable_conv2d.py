@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from typing import Optional
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 class DepthwiseSeparableConv2d(nn.Module):
@@ -11,7 +11,7 @@ class DepthwiseSeparableConv2d(nn.Module):
     two steps: a depthwise convolution that applies a filter to each channel 
     independently, followed by a pointwise convolution that combines the results.
 
-    Args:
+    Parameters:
         in_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         kernel_size (int): Size of the kernel for the depthwise convolution.
@@ -20,19 +20,20 @@ class DepthwiseSeparableConv2d(nn.Module):
         bias (bool, optional): Whether to include a bias term in the convolutions. Default is True.
 
     Returns:
-        torch.Tensor: The output tensor.
+        (torch.Tensor): The output tensor.
     """
     
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
                  kernel_size: int,
-                 stride: int = 1,
-                 padding: int = 0,
-                 bias: bool = True):
+                 stride: Optional[int] = 1,
+                 padding: Optional[int] = 0,
+                 bias: Optional[bool] = True):
         super(DepthwiseSeparableConv2d, self).__init__()
         
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=in_channels, bias=bias)
+        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, stride=stride, padding=padding,
+                                   groups=in_channels, bias=bias)
         self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

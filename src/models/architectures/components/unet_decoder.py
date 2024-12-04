@@ -13,12 +13,13 @@ class UnetDecoder(nn.Module):
     This decoder applies specified convolutional blocks after upsampling, optionally enhancing feature representation 
     with attention gates that focus on relevant features from the skip connections.
 
-    Args:
+    Parameters:
         base_channels (int): Base number of output channels, will be divided by powers of 2 for each layer.
         num_layers (int): Number of layers in the decoder.
         block_type (Type[nn.Module]): The type of block to use.
         attention_gates (bool, optional): If set to True, incorporates attention gates in the skip connections.
-        cross_level_skip (float: optional): If set to True, allows the decoder to utilize skip connections from multiple levels of the encoder. Default False.
+        cross_level_skip (float: optional): If set to True, allows the decoder to utilize skip connections 
+            from multiple levels of the encoder. Default False.
         **kwargs: Additional arguments to pass to the block constructor.
 
     Attributes:
@@ -35,7 +36,7 @@ class UnetDecoder(nn.Module):
         4. The concatenated tensor is passed through the specified convolutional block.
 
     Returns:
-        torch.Tensor: The output tensor after the final decoder block.
+        (torch.Tensor): The output tensor after the final decoder block.
     """
 
     def __init__(self, 

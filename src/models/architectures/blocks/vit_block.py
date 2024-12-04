@@ -27,7 +27,8 @@ class ViTBlock(nn.Module):
         num_layers (int): The number of Visual Transformer layers to stack.
         num_heads (int): The number of attention heads in each transformer layer.
         dropout_prob (float, optional): Probability of dropout applied to the feed-forward layers. Default is None (no dropout).
-        activation (str, optional): The activation function to use in the feed-forward layers. Default is "ReLU". Options include "ReLU", "LeakyReLU", and "GeLU".
+        activation (str, optional): The activation function to use in the feed-forward layers. 
+            Default is "ReLU". Options include "ReLU", "LeakyReLU", and "GeLU".
         use_cls_token (bool, optional): Whether to include a classification token. Default False.
 
     Attributes:
@@ -40,7 +41,7 @@ class ViTBlock(nn.Module):
         3. Use the output embeddings to reconstruct the output tensor and generate the attention map using the decoder.
     
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+        (tuple): A tuple containing.
             (torch.Tensor): The reconstructed output tensor of shape (batch_size, channels, height, width).
             (torch.Tensor): The attention map of shape (batch_size, 1, height, width).
     """

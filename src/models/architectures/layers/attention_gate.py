@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Type, List, Tuple, Optional, Dict
+from typing import Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ class AttentionGate(nn.Module):
     connection features through convolutional layers. The output is the input 
     feature map reweighted by the attention mechanism, enhancing the relevant features.
 
-    Args:
+    Parameters:
         input_channels_x (int): Number of input channels from the skip connection.
         input_channels_g (int): Number of input channels from the gating signal.
         output_channels (int): Number of output channels for the attention gate.
@@ -41,8 +41,8 @@ class AttentionGate(nn.Module):
            relevant features.
 
     Returns:
-        torch.Tensor: The output tensor of shape (batch_size, channels, height, width), where each channel is 
-        reweighted based on the attention mechanism.
+        (torch.Tensor): The output tensor of shape (batch_size, channels, height, width), where each channel is 
+            reweighted based on the attention mechanism.
     """
     def __init__(self,
                  input_channels_x: int,

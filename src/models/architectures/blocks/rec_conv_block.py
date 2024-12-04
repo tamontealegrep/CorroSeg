@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 from src.models.architectures.layers.cbam import CBAM
+from src.models.architectures.layers.depthwise_separable_conv2d import DepthwiseSeparableConv2d
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -12,22 +13,25 @@ class RecConvBlock(nn.Module):
     an activation function, Batch Normalization and optionally CBAM attention and dropout. This block is designed to enhance feature 
     extraction capabilities, commonly used in architectures like U-Net.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         output_channels (int): Number of output channels.
         num_recurrences (int, optional): Number of times to apply the convolutions in a recurrent manner. Default is 3.
         activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
-        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. Default is None (no Dropout).
+        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. 
+            Default is None (no Dropout).
         cbam (bool, optional): Whether to include the Convolutional Block Attention Module (CBAM). Default is False.
         cbam_reduction (int, optional): Reduction factor for the channel dimension in CBAM. Default is 16.
         cbam_kernel_size (int, optional): Kernel size for the spatial attention in CBAM. Default is 7.
-        cbam_activation (str, optional): Activation function to use in channel attention in CBAM. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
+        cbam_activation (str, optional): Activation function to use in channel attention in CBAM. 
+            Default is "ReLU". Options: "ReLU" and "LeakyReLU".
+        use_depthwise (bool, optional): Whether to use depthwise separable convolutions instead of standard convolutions. Default is False.
 
     Attributes:
         conv_adjust (torch.nn.Conv2d): 1x1 convolutional layer used to adjust the number of channels in the input.
-        conv1 (torch.nn.Conv2d): First convolutional layer.
+        conv1 (torch.nn.Module): First convolutional layer (can be standard or depthwise separable).
+        conv2 (torch.nn.Module): Second convolutional layer (can be standard or depthwise separable).
         norm1 (torch.nn.BatchNorm2d): Batch normalization layer after the first convolution.
-        conv2 (torch.nn.Conv2d): Second convolutional layer.
         norm2 (torch.nn.BatchNorm2d): Batch normalization layer after the second convolution.
         activation (torch.nn.Module): The activation function.
         cbam (CBAM): CBAM module for channel and spatial attention.
@@ -42,24 +46,29 @@ class RecConvBlock(nn.Module):
         4. Applies dropout if specified.
 
     Returns:
-        torch.Tensor: The output tensor after the convolutional operations, normalization, 
-        activation, and optionally cbam and dropout.
+        (torch.Tensor): The output tensor after the convolutional operations, normalization, 
+            activation, and optionally cbam and dropout.
     """
     def __init__(self,
-                 input_channels:int,
-                 output_channels:int,
-                 activation:Optional[str]="ReLU",
-                 dropout_prob:Optional[float]=None,
-                 num_recurrences:int=3,
-                 cbam:float=False,
-                 cbam_reduction:int=16,
-                 cbam_kernel_size:int=7,
-                 cbam_activation:Optional[str]="ReLU"):
+                 input_channels: int,
+                 output_channels: int,
+                 activation: Optional[str] = "ReLU",
+                 dropout_prob: Optional[float] = None,
+                 num_recurrences: Optional[int] = 3,
+                 cbam: Optional[float] = False,
+                 cbam_reduction: Optional[int] = 16,
+                 cbam_kernel_size: Optional[int] = 7,
+                 cbam_activation:Optional[str] = "ReLU",
+                 use_depthwise: Optional[bool] = False):
         super(RecConvBlock, self).__init__()
         self.conv_adjust = nn.Conv2d(input_channels, output_channels, kernel_size=1, padding=0)
-        self.conv1 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
+        if use_depthwise:
+            self.conv1 = DepthwiseSeparableConv2d(output_channels, output_channels, kernel_size=3, padding=1)
+            self.conv2 = DepthwiseSeparableConv2d(output_channels, output_channels, kernel_size=3, padding=1)
+        else:
+            self.conv1 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
         self.norm1 = nn.BatchNorm2d(output_channels)
-        self.conv2 = nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1)
         self.norm2 = nn.BatchNorm2d(output_channels)
         self.num_recurrences = num_recurrences
 

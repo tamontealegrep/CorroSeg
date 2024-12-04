@@ -6,9 +6,6 @@ from typing import Type, Optional, Dict
 from . import Network
 
 from src.models.architectures.components.vit_feature_extractor import ViTFeatureExtractor
-from src.models.architectures.components.unet_encoder import UnetEncoder
-from src.models.architectures.components.unet_bottleneck import UnetBottleneck
-from src.models.architectures.components.unet_decoder import UnetDecoder
 from src.models.architectures.activations import get_activation_function
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -75,7 +72,18 @@ class ViT(Network):
         # Initialize kwargs if not provided
         extractor_kwargs = extractor_kwargs or {}
 
-        self.extractor = ViTFeatureExtractor(input_channels, input_height, input_width, patch_height, patch_width, embed_dim, num_layers, num_heads, extractor_block_type, **extractor_kwargs)
+        self.extractor = ViTFeatureExtractor(
+            input_channels,
+            input_height,
+            input_width,
+            patch_height,
+            patch_width,
+            embed_dim,
+            num_layers,
+            num_heads,
+            extractor_block_type,
+            **extractor_kwargs)
+        
         self.final_conv = nn.Conv2d(input_channels, output_channels, kernel_size=1)
         self.output_activation = get_activation_function(output_activation) if output_activation != "" else None
 

@@ -14,7 +14,7 @@ class ChannelAttention(nn.Module):
     and global max pooling on the input feature map, followed by a shared 
     multilayer perceptron (MLP) to generate channel-wise attention weights.
     
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         reduction (int, optional): Reduction factor for the channel dimension. Default is 16.
         activation (str, optional): Activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
@@ -33,9 +33,13 @@ class ChannelAttention(nn.Module):
         5. The results from the average and max pooling paths are summed and passed through a Sigmoid activation.
     
     Returns:
-        torch.Tensor: The output tensor of shape (batch_size, channels, 1, 1), where each channel is reweighted based on the attention mechanism.
+        (torch.Tensor): The output tensor of shape (batch_size, channels, 1, 1), where each channel is reweighted
+            based on the attention mechanism.
     """
-    def __init__(self, input_channels:int, reduction:int=16, activation:Optional[str]='ReLU'):
+    def __init__(self,
+                 input_channels: int,
+                 reduction: Optional[int] = 16,
+                 activation: Optional[str]='ReLU'):
         super(ChannelAttention, self).__init__()
         self.fc1 = nn.Linear(input_channels, input_channels // reduction, bias=False)
         self.fc2 = nn.Linear(input_channels // reduction, input_channels, bias=False)
@@ -66,7 +70,7 @@ class SpatialAttention(nn.Module):
     pooling operations across the channel dimension. The results are concatenated 
     and passed through a convolutional layer to generate spatial attention weights.
 
-    Args:
+    Parameters:
         kernel_size (int, optional): Size of the convolution kernel. Default is 7.
 
     Attributes:
@@ -80,7 +84,8 @@ class SpatialAttention(nn.Module):
         4. Apply a Sigmoid activation to generate the final attention map.
 
     Returns:
-        torch.Tensor: The output tensor of shape (batch_size, 1, height, width), where each pixel is reweighted based on the spatial attention mechanism.
+        (torch.Tensor): The output tensor of shape (batch_size, 1, height, width), where each pixel is reweighted 
+            based on the spatial attention mechanism.
     """
     def __init__(self, kernel_size:int=7):
         super(SpatialAttention, self).__init__()
@@ -101,7 +106,7 @@ class CBAM(nn.Module):
     spatial attention to the input feature map, enhancing important features 
     while suppressing less relevant ones.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         reduction (int, optional): Reduction factor for the channel dimension in channel attention. Default is 16.
         kernel_size (int, optional): Size of the convolution kernel for spatial attention. Default is 7.
@@ -118,9 +123,13 @@ class CBAM(nn.Module):
         3. The final output is the input tensor weighted by both channel and spatial attention.
 
     Returns:
-        torch.Tensor: The output tensor after applying both attention mechanisms, with the same shape as the input.
+        (torch.Tensor): The output tensor after applying both attention mechanisms, with the same shape as the input.
     """
-    def __init__(self, input_channels, reduction=16, kernel_size=7, activation:Optional[str]="ReLU"):
+    def __init__(self,
+                 input_channels: int,
+                 reduction: Optional[int] = 16,
+                 kernel_size: Optional[int] = 7,
+                 activation: Optional[str] = "ReLU"):
         super(CBAM, self).__init__()
         self.channel_attention = ChannelAttention(input_channels, reduction, activation)
         self.spatial_attention = SpatialAttention(kernel_size)

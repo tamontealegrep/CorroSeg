@@ -12,15 +12,17 @@ class ConvBlock(nn.Module):
     activation, and optionally CBAM attention and dropout. This is commonly used in U-Net architectures 
     to enhance feature extraction capabilities.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
-        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. Default is None (no Dropout).
+        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after the second convolution. 
+            Default is None (no Dropout).
         cbam (bool, optional): Whether to include the Convolutional Block Attention Module (CBAM). Default is False.
         cbam_reduction (int, optional): Reduction factor for the channel dimension in CBAM. Default is 16.
         cbam_kernel_size (int, optional): Kernel size for the spatial attention in CBAM. Default is 7.
-        cbam_activation (str, optional): Activation function to use in channel attention in CBAM. Default is "ReLU". Options: "ReLU" and "LeakyReLU".
+        cbam_activation (str, optional): Activation function to use in channel attention in CBAM. 
+            Default is "ReLU". Options: "ReLU" and "LeakyReLU".
 
     Attributes:
         conv1 (torch.nn.Conv2d): First convolutional layer.
@@ -39,17 +41,17 @@ class ConvBlock(nn.Module):
         4. Applies dropout if specified.
 
     Returns:
-        torch.Tensor: The output tensor after two convolutional operations with normalization 
-        and activation applied, attention and optionally dropout.
+        (torch.Tensor): The output tensor after two convolutional operations with normalization 
+            and activation applied, attention and optionally dropout.
     """
     def __init__(self,
                  input_channels: int,
                  output_channels: int,
                  activation: Optional[str] = "ReLU",
                  dropout_prob: Optional[float] = None,
-                 cbam:float=False,
-                 cbam_reduction: int = 16,
-                 cbam_kernel_size: int = 7,
+                 cbam: Optional[float] = False,
+                 cbam_reduction: Optional[int] = 16,
+                 cbam_kernel_size: Optional[int] = 7,
                  cbam_activation: Optional[str] = "ReLU"):
         super(ConvBlock, self).__init__()
         self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=3, padding=1)

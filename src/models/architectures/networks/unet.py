@@ -19,7 +19,7 @@ class Unet(Network):
     """
     U-Net architecture combining encoder, bottleneck, and decoder components.
 
-    Args:
+    Parameters:
         input_channels (int): Number of input channels.
         output_channels (int): Number of output channels.
         base_channels (int): Base number of output channels, will be multiplied by powers of 2 for each layer.
@@ -33,7 +33,8 @@ class Unet(Network):
         decoder_kwargs (Dict, optional): Additional arguments for the decoder blocks.
         skip_connections_kwargs Dict, optional): Additional arguments for the skip connection blocks.
         attention_gates (float, optional): Whether or not use attention gates in the skep connection blocks. Default False.
-        output_activation (str, optional): The activation function to apply to the output of the network. This function is applied after the final convolution layer. Default is "".
+        output_activation (str, optional): The activation function to apply to the output of the network. 
+            This function is applied after the final convolution layer. Default is "".
 
     Attributes:
         encoder (UnetEncoder): The encoder component of the U-Net.
@@ -91,16 +92,42 @@ class Unet(Network):
         decoder_kwargs = decoder_kwargs or {}
         skip_connections_kwargs = skip_connections_kwargs or {}
         
-        self.encoder = UnetEncoder(input_channels, base_channels, num_layers, encoder_block_type, **encoder_kwargs)
+        self.encoder = UnetEncoder(
+            input_channels,
+            base_channels,
+            num_layers,
+            encoder_block_type,
+            **encoder_kwargs)
         
-        self.bottleneck = UnetBottleneck(base_channels, num_layers, bottleneck_block_type, **bottleneck_kwargs)
+        self.bottleneck = UnetBottleneck(
+            base_channels,
+            num_layers,
+            bottleneck_block_type,
+            **bottleneck_kwargs)
         
         if skip_connections_block_type is not None:
-            self.skip_connections = UnetSkipConnections(base_channels, num_layers, skip_connections_block_type, attention_gates=attention_gates, **skip_connections_kwargs)
-            self.decoder = UnetDecoder(base_channels, num_layers, decoder_block_type, attention_gates=attention_gates, cross_level_skip=True, **decoder_kwargs)
+            self.skip_connections = UnetSkipConnections(
+                base_channels,
+                num_layers,
+                skip_connections_block_type,
+                attention_gates=attention_gates,
+                **skip_connections_kwargs)
+            
+            self.decoder = UnetDecoder(
+                base_channels,
+                num_layers,
+                decoder_block_type,
+                attention_gates=attention_gates,
+                cross_level_skip=True,
+                **decoder_kwargs)
         else:
             self.skip_connections = None
-            self.decoder = UnetDecoder(base_channels, num_layers, decoder_block_type, attention_gates=attention_gates, **decoder_kwargs)
+            self.decoder = UnetDecoder(
+                base_channels,
+                num_layers,
+                decoder_block_type,
+                attention_gates=attention_gates,
+                **decoder_kwargs)
 
         self.final_conv = nn.Conv2d(base_channels, output_channels, kernel_size=1)
 
@@ -110,7 +137,7 @@ class Unet(Network):
         """
         Forward pass through the U-Net architecture.
 
-        Args:
+        Parameters:
             x (torch.Tensor): Input tensor.
 
         Returns:
@@ -138,7 +165,7 @@ class Unet(Network):
         """
         Creates a Unet model instance from the provided configuration dictionary.
 
-        Args:
+        Parameters:
             config_dict (dict): A dictionary containing the model's configuration.
 
         Returns:
@@ -152,7 +179,11 @@ class Unet(Network):
             encoder_block_type=eval(config_dict["encoder_block_type"]),
             bottleneck_block_type=eval(config_dict["bottleneck_block_type"]),
             decoder_block_type=eval(config_dict["decoder_block_type"]),
-            skip_connections_block_type=eval(config_dict["skip_connections_block_type"]) if config_dict["skip_connections_block_type"] else None,
+            skip_connections_block_type=(
+                eval(config_dict["skip_connections_block_type"]) 
+                if config_dict["skip_connections_block_type"] 
+                else None
+                ),
             encoder_kwargs=config_dict["encoder_kwargs"],
             bottleneck_kwargs=config_dict["bottleneck_kwargs"],
             decoder_kwargs=config_dict["decoder_kwargs"],

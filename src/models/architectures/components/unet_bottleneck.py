@@ -9,7 +9,7 @@ class UnetBottleneck(nn.Module):
     """
     A bottleneck for U-Net architecture that applies a specified convolutional block.
 
-    Args:
+    Parameters:
         base_channels (int): Base number of output channels. 
                              The number of channels for the bottleneck is computed as:
                              - Input channels: base_channels * (2 ** (num_layers - 1))
@@ -25,7 +25,7 @@ class UnetBottleneck(nn.Module):
         The input tensor "x" is passed through the convolutional block.
 
     Returns:
-        torch.Tensor: The output tensor after applying the convolutional block.
+        (torch.Tensor): The output tensor after applying the convolutional block.
     """
 
     def __init__(self,

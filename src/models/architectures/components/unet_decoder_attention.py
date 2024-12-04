@@ -12,8 +12,9 @@ class UnetDecoderAttention(nn.Module):
     This decoder applies specified convolutional blocks after upsampling, enhancing feature representation 
     with attention gates that focus on relevant features from the skip connections.
 
-    Args:
-        base_channels (int): The base number of output channels. This value is used to determine the number of output channels for each layer by dividing it by powers of 2.
+    Parameters:
+        base_channels (int): The base number of output channels. This value is used to determine the number of output channels 
+            for each layer by dividing it by powers of 2.
         num_layers (int): The number of layers in the decoder, determining the depth of the network.
         block_type (Type[nn.Module]): The type of convolutional block to use in the decoder.
         **kwargs: Additional keyword arguments to pass to the block constructor (e.g., activation functions, normalization).
@@ -32,7 +33,7 @@ class UnetDecoderAttention(nn.Module):
         4. The concatenated tensor is passed through the specified convolutional block.
 
     Returns:
-        torch.Tensor: The output tensor after processing through all decoder blocks.
+        (torch.Tensor): The output tensor after processing through all decoder blocks.
     """
 
     def __init__(self, 

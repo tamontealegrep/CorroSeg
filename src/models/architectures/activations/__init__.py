@@ -27,6 +27,7 @@ def get_activation_function(activation_name: str):
     elif activation_name == "":
         return lambda x: x
     else:
-        raise ValueError(f"Unsupported activation function: {activation_name}, avaliable options: relu_clipped, sigmoid, softplus_clipped, tanh_normalized")
+        raise ValueError(f"Unsupported activation function: {activation_name},
+            avaliable options: relu_clipped, sigmoid, softplus_clipped, tanh_normalized")
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

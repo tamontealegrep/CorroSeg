@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Union, Tuple, List
+from typing import Optional, Union, Tuple, List
 
 from src.models.operations.train import train
 from src.models.operations.evaluate import evaluate
@@ -16,7 +16,7 @@ class Network(nn.Module):
         """
         Base class for models.
 
-        Attributes:
+        Parameters:
             config (dict): A dictionary that holds the model's configuration, including
                    hyperparameters, and other model-specific parameters. This attribute is 
                    initialized automatically and can be used to save or load the model configuration.
@@ -33,7 +33,7 @@ class Network(nn.Module):
         Sets the device for the computations.
         If no device name is provided, it will select the default device (cuda if available).
 
-        Args:
+        Parameters:
             device_name (str, optional): The name of the device (e.g., "cuda" or "cpu").
                                           If not provided, the default device will be used.
         """
@@ -48,15 +48,15 @@ class Network(nn.Module):
                 raise ValueError(f"Invalid device '{device_name}'. Use 'cpu' or 'cuda'.")
 
     def train_model(self,
-                    criterion:nn.Module,
-                    optimizer:torch.optim.Optimizer,
-                    train_loader:torch.utils.data.DataLoader,
-                    val_loader:Union[torch.utils.data.DataLoader, None]=None,
-                    num_epochs:int=10) -> None:
+                    criterion: nn.Module,
+                    optimizer: torch.optim.Optimizer,
+                    train_loader: torch.utils.data.DataLoader,
+                    val_loader: Optional[Union[torch.utils.data.DataLoader, None]] = None,
+                    num_epochs: Optional[int] = 10) -> None:
         """
         Train and optionally validate the given model for a specified number of epochs.
 
-        Args:
+        Parameters:
             criterion (torch.nn.Module): The loss function used to compute the losses.
             optimizer (torch.optim.Optimizer): The optimizer used for updating the model's weights.
             train_loader (torch.utils.data.DataLoader): DataLoader for the training data.
@@ -70,7 +70,8 @@ class Network(nn.Module):
 
     def evaluate_model(self,
                        data:Union[torch.utils.data.Dataset,torch.utils.data.DataLoader],
-                       criterion:nn.Module) -> Tuple[np.ndarray, List[float], float]:
+                       criterion:nn.Module,
+                       ) -> Tuple[np.ndarray, List[float], float]:
         """
         Evaluate the model on the provided dataset or dataloader using the specified loss function.
 
@@ -80,12 +81,12 @@ class Network(nn.Module):
         - the individual losses for each sample,
         - and the total average loss.
 
-        Args:
+        Parameters:
             data (Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]): The input data, either a Dataset or a DataLoader.
             criterion (torch.nn.Module): The loss function used to compute the losses.
 
         Returns:
-            tuple: A tuple containing:
+            (tuple): A tuple containing:
                 outputs (numpy.ndarray): Predictions for each sample.
                 losses (list): List of individual losses for each sample.
                 average_loss (float): The average loss across the dataset or dataloader.
@@ -93,11 +94,12 @@ class Network(nn.Module):
         return evaluate(self, data, criterion)
 
     def predict_model(self,
-                      data:Union[torch.utils.data.Dataset,torch.utils.data.DataLoader]) -> np.ndarray:
+                      data:Union[torch.utils.data.Dataset,torch.utils.data.DataLoader],
+                      ) -> np.ndarray:
         """
         Predict outputs for a given dataset or dataloader using the specified model.
 
-        Args:
+        Parameters:
             data (Union[torch.utils.data.Dataset, torch.utils.data.DataLoader]): The input data.
 
         Returns:
@@ -113,7 +115,7 @@ class Network(nn.Module):
         (hyperparameters and architecture details) to a specified file. This allows for 
         reloading the model later with the same architecture and weights.
 
-        Args:
+        Parameters:
             path (str): The path to the file where the model's state and configuration
                             will be saved. The file will be saved in PyTorch's .pth format.
         """
@@ -133,7 +135,7 @@ class Network(nn.Module):
         Static method to load a model from a file and create an instance from the saved configuration.
         This method uses the configuration dictionary and the from_dict method to create the model.
 
-        Args:
+        Parameters:
             path (str): The path to the model file to load.
         
         Returns:

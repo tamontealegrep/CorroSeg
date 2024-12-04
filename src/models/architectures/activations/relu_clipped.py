@@ -3,7 +3,7 @@ import torch
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def relu_clipped(x:torch.Tensor) -> torch.Tensor:
+def relu_clipped(x: torch.Tensor) -> torch.Tensor:
     """
     Applies the ReLU activation function to the input tensor and then clips the output to the range [0, 1].
 

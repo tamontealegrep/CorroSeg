@@ -13,7 +13,7 @@ class FeedForward(nn.Module):
 
     This block consists of two linear transformations with a ReLU activation in between.
 
-    Args:
+    Parameters:
         embed_dim (int): The dimension of the input embeddings.
         ff_dim (int): The dimension of the hidden layer in the feed-forward network.
         activation (str, optional): The activation function to use. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
@@ -28,7 +28,7 @@ class FeedForward(nn.Module):
         1. Linear transformation (linear1) -> Activation -> Linear transformation (linear2)
 
     Returns:
-        torch.Tensor: A tensor of shape (B, N, embed_dim) containing the output of the feed-forward network.
+        (torch.Tensor): A tensor of shape (B, N, embed_dim) containing the output of the feed-forward network.
     """
 
     def __init__(self, embed_dim: int, ff_dim: int, activation: Optional[str] = 'ReLU'):
@@ -57,12 +57,14 @@ class ViTLayer(nn.Module):
     This layer consists of multi-head self-attention followed by a feed-forward network,
     with residual connections and layer normalization.
 
-    Args:
+    Parameters:
         embed_dim (int): The dimension of the input embeddings.
         num_heads (int): The number of attention heads.
         ff_dim (int): The dimension of the feed-forward network.
-        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after attention layer and feed-forward. Default is None (no Dropout).
-        activation (str, optional): The activation function to use in the feed-forward. Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
+        dropout_prob (float, optional): Probability of dropout. If set, a Dropout layer will be applied after attention layer and feed-forward. 
+            Default is None (no Dropout).
+        activation (str, optional): The activation function to use in the feed-forward. 
+            Default is "ReLU". Options: "ReLU", "LeakyReLU", and "GeLU".
 
     Attributes:
         attention (nn.MultiheadAttention): The multi-head attention layer.
@@ -83,9 +85,9 @@ class ViTLayer(nn.Module):
         8. Residual connection
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-            torch.Tensor: Output tensor of shape (B, N, embed_dim).
-            torch.Tensor: Attention weights, averaged across heads.
+        (tuple): A tuple containing.
+            (torch.Tensor): Output tensor of shape (B, N, embed_dim).
+            (torch.Tensor): Attention weights, averaged across heads.
     """
 
     def __init__(self,
@@ -137,7 +139,7 @@ class ViTEncoder(nn.Module):
 
     This block consists of multiple ViTLayer stacked together.
 
-    Args:
+    Parameters:
         num_layers (int): The number of ViTLayer to stack.
         num_heads (int): The number of attention heads.
         embed_dim (int): The dimension of the input embeddings.
@@ -152,8 +154,9 @@ class ViTEncoder(nn.Module):
         The input tensor "x" is passed through each ViTLayer in sequence.
 
     Returns:
-        torch.Tensor: Output tensor of shape (B, N, embed_dim).
-        torch.Tensor: Attention weights from the last layer.
+        (tuple): A tuple containing.
+            (torch.Tensor): Output tensor of shape (B, N, embed_dim).
+            (torch.Tensor): Attention weights from the last layer.
     """
 
     def __init__(self,

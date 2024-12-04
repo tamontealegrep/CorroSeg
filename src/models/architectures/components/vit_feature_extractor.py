@@ -32,7 +32,7 @@ class ViTFeatureExtractor(nn.Module):
         map, and the scaled tensor is concatenated with the features extracted from the transformer.
         
     Returns:
-        tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+        (tuple): A tuple containing.
             output (torch.Tensor): The concatenated tensor of scaled input and extracted features.
             attention_map (torch.Tensor): The attention map derived from the transformer blocks.
     """

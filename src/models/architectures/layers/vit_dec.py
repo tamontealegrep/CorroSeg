@@ -15,7 +15,7 @@ class PatchReconstructor(nn.Module):
     corresponds to a patch of the input tensor, and the module combines
     these patches back into the full tensor.
 
-    Args:
+    Parameters:
         input_channels (int): The number of channels in the input tensor.
         input_height (int): The height of the input tensor.
         input_width (int): The width of the input tensor.
@@ -32,7 +32,7 @@ class PatchReconstructor(nn.Module):
         num_patches_w (int): The number of patches along the width of the tensor.
 
     Returns:
-        torch.Tensor: A reconstructed tensor of shape (batch_size, input_channels, input_height, input_width),
+        (torch.Tensor): A reconstructed tensor of shape (batch_size, input_channels, input_height, input_width),
                       where each patch is populated according to its corresponding embedding.
     """
     def __init__(self, input_channels: int, input_height: int, input_width: int, patch_height: int, patch_width: int):
@@ -78,7 +78,7 @@ class AttentionMapReconstructor(nn.Module):
     extract the CLS token attention with the other tokens, and reconstructs an attention map
     by assigning each patch a weight corresponding to the attention the CLS token pays to that patch.
 
-    Args:
+    Parameters:
         input_height (int): Height of the input tensor.
         input_width (int): Width of the input tensor.
         patch_height (int): Height of each patch.
@@ -93,8 +93,8 @@ class AttentionMapReconstructor(nn.Module):
         num_patches_w (int): Number of patches along the width.
 
     Returns:
-        torch.Tensor: A reconstructed image of shape (batch_size, 1, input_height, input_width).
-        Where each pixel in the reconstructed map represents the attention weight assigned to the corresponding pixel.
+        (torch.Tensor): A reconstructed image of shape (batch_size, 1, input_height, input_width).
+            Where each pixel in the reconstructed map represents the attention weight assigned to the corresponding pixel.
 
     """
     def __init__(self, input_height: int, input_width: int, patch_height: int, patch_width: int):
@@ -140,7 +140,7 @@ class ViTDecoder(nn.Module):
     A decoder module that reconstructs an image and an attention map
     from the output of a transformer block.
 
-    Args:
+    Parameters:
         input_channels (int): The number of channels in the input image.
         input_height (int): The height of the input image.
         input_width (int): The width of the input image.
@@ -158,9 +158,9 @@ class ViTDecoder(nn.Module):
         scaler (Optional[nn.Linear]): Linear layer to scale embeddings if required.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-            torch.Tensor: Reconstructed image of shape (batch_size, input_channels, input_height, input_width).
-            torch.Tensor: Attention map of shape (batch_size, 1, input_height, input_width) if `use_cls_token` is True, else None.
+        (tuple): A tuple containing.
+            (torch.Tensor): Reconstructed image of shape (batch_size, input_channels, input_height, input_width).
+            (torch.Tensor): Attention map of shape (batch_size, 1, input_height, input_width) if `use_cls_token` is True, else None.
     """
     def __init__(self,
                  input_channels: int,
@@ -181,12 +181,12 @@ class ViTDecoder(nn.Module):
 
     def forward(self, embeddings: torch.Tensor, attention_weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Args:
+        Parameters:
             embeddings (torch.Tensor): Output tensor from the transformer block of shape (batch_size, num_patches, embed_dim).
             attention_weights (torch.Tensor): Attention weights from the transformer block of shape (batch_size, num_patches, num_patches).
 
         Returns:
-            Tuple[torch.Tensor, Optional[torch.Tensor]]: A tuple containing:
+            (tuple): A tuple containing.
                 output_tensor (torch.Tensor): The reconstructed output tensor of shape (batch_size, input_channels, input_height, input_width).
                 attention_map (torch.Tensor or None): The attention map of shape (batch_size, 1, input_height, input_width) if `use_cls_token` is True, else None.
         """

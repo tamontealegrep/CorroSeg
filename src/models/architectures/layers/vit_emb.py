@@ -13,7 +13,7 @@ class PatchExtractor(nn.Module):
     and extracts patches of size (height, width) from each tensor,
     returning a tensor with dimensions (batch_size, num_patches, channels, patch_height, patch_width).
 
-    Args:
+    Parameters:
         patch_height (int): Height of each patch, how tall each extracted patch will be.
         patch_width (int): Width of each patch, how wide each extracted patch will be.
 
@@ -22,7 +22,7 @@ class PatchExtractor(nn.Module):
         patch_width (int): Width of each patch.
     
     Returns:
-        torch.Tensor: A tensor of shape (batch_size, num_patches, channels, patch_height, patch_width).
+        (torch.Tensor): A tensor of shape (batch_size, num_patches, channels, patch_height, patch_width).
     """
 
     def __init__(self, patch_height:int, patch_width:int):
@@ -55,7 +55,7 @@ class PatchEmbedding(nn.Module):
     This class uses the PatchExtractor to extract patches from input tensors of shape (batch_size, channels, height, width),
     and then applies a linear transformation to create embeddings for each patch of shape (batch_size, num_patches, embed_dim).
 
-    Args:
+    Parameters:
         input_channels (int): Number of channels of the input tensors.
         input_height (int): Height of the input tensors.
         input_width (int): Width of the input tensors.
@@ -69,7 +69,7 @@ class PatchEmbedding(nn.Module):
         num_patches (int): Total number of patches extracted from the input tensor.
 
     Returns:
-        torch.Tensor: A tensor of shape (batch_size, num_patches, embed_dim) containing the embeddings for each patch.
+        (torch.Tensor): A tensor of shape (batch_size, num_patches, embed_dim) containing the embeddings for each patch.
     """
 
     def __init__(self, input_channels:int, input_height: int, input_width: int, patch_height: int, patch_width: int, embed_dim: int):
@@ -98,7 +98,7 @@ class PositionalEmbedding(nn.Module):
     This class generates a learnable positional embedding for each patch in the input
     and adds it to the provided input tensor.
 
-    Args:
+    Parameters:
         num_patches (int): Number of patches.
         embed_dim (int): Dimension of the output embeddings.
 
@@ -106,8 +106,8 @@ class PositionalEmbedding(nn.Module):
         position_embeddings (nn.Parameter): Learnable positional embeddings of shape (1, num_patches, embed_dim).
     
     Returns:
-        torch.Tensor: A tensor of shape (batch_size, num_patches, embed_dim) containing the summed 
-                      positional embeddings with the input tensor.
+        (torch.Tensor): A tensor of shape (batch_size, num_patches, embed_dim) containing the summed 
+            positional embeddings with the input tensor.
     """
 
     def __init__(self, num_patches: int, embed_dim: int):
@@ -125,7 +125,7 @@ class ViTEmbedding(nn.Module):
     This class processes input tensors of shape (batch_size, channels, height, width) to extract patches, 
     apply positional embeddings, and optionally incorporate a classification token (cls_token).
 
-    Args:
+    Parameters:
         input_channels (int): Number of channels of the input tensors.
         input_height (int): Height of the input tensors.
         input_width (int): Width of the input tensors.
@@ -142,7 +142,8 @@ class ViTEmbedding(nn.Module):
         cls_token (nn.Parameter): A learnable classification token of shape (1, 1, embed_dim) that is prepended to the embeddings.    
     
     Returns:
-        torch.Tensor: A tensor of shape (batch_size, num_patches + 1, embed_dim) if cls_token is used, else (batch_size, num_patches, embed_dim).
+        (torch.Tensor): A tensor of shape (batch_size, num_patches + 1, embed_dim) if cls_token is used, 
+            else (batch_size, num_patches, embed_dim).
     """
 
     def __init__(self,
