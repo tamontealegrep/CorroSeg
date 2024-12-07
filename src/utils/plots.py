@@ -77,6 +77,85 @@ def plot_data(X: np.ndarray,
     plt.tight_layout()
     plt.show()
 
+def plot_overlay(X: np.ndarray,
+              y: Optional[np.ndarray] = None,
+              z: Optional[np.ndarray] = None,
+              range: Optional[tuple] = (-0.2, 0.2),
+              X_cmap: Optional[str] = "gray",
+              y_cmap: Optional[str] = "gray",
+              vertical_range: Optional[tuple] = None,
+              figsize: Optional[tuple] = (5, 5),
+              darken_factor: Optional[float] = 0,
+              background_color: Optional[str] = "white"
+              ) -> None:
+    """
+    Visualize X (features), y (mask), and optionally z (predictions) superimposed on X, where the mask/prediction
+    areas with a value of 0 are darkened and areas with a value of 1 remain unchanged.
+
+    Parameters:
+        X (numpy.ndarray): Features 2D array (image).
+        y (numpy.ndarray, optional): Target 2D array (mask). If None, only X will be visualized.
+        z (numpy.ndarray, optional): Predictions 2D array. If None, only X and y (if provided) will be visualized.
+        range (tuple, optional): The (min, max) range for the X color scale. Default: (-0.2, 0.2)
+        X_cmap (str, optional): Colormap name for X. Default "gray".
+        y_cmap (str, optional): Colormap name for y, and z. Default "viridis".
+        vertical_range (tuple, optional): A tuple (start, end) to slice the image vertically. Default: None.
+        figsize (tuple, optional): Size of the subplots.
+        darken_factor (float, optional): Factor by which to darken pixels in X where y or z are 0. Default: 0.
+        background_color (str, optional): Color of the background. Default white.
+
+    Returns:
+        None: Displays the plot of the images side by side with the mask/prediction overlaid.
+    """
+    # Determine the number of images to display based on the presence of y and z
+    num_images = 1  # Start with X
+    if y is not None:
+        num_images += 1  # Add y if it's provided
+    if z is not None:
+        num_images += 1  # Add z if it's provided
+
+    # Create subplots to display the images
+    fig, axes = plt.subplots(1, num_images, figsize=figsize)
+
+    # Ensure axes is always a list, even if it's just one axis
+    if num_images == 1:
+        axes = [axes]
+
+    fig.patch.set_facecolor(background_color)
+
+    # If vertical_range is specified, slice the images vertically
+    if vertical_range is not None:
+        X = X[vertical_range[0]:vertical_range[1]]
+        if y is not None:
+            y = y[vertical_range[0]:vertical_range[1]]
+        if z is not None:
+            z = z[vertical_range[0]:vertical_range[1]]
+
+    # Plot the primary image (X)
+    axes[0].imshow(X, vmin=range[0], vmax=range[1], cmap=X_cmap)
+    axes[0].set_title("Input")
+    axes[0].axis("off")
+
+    # Overlay the mask (y) if available
+    if y is not None:
+        X_with_y = X.copy()
+        X_with_y[y == 0] *= darken_factor  # Darken the pixels where y is 0
+        axes[1].imshow(X_with_y, vmin=range[0], vmax=range[1], cmap=y_cmap)
+        axes[1].set_title("Mask Overlay")
+        axes[1].axis("off")
+
+    # Overlay the prediction (z) if available
+    if z is not None:
+        X_with_z = X.copy()
+        X_with_z[z == 0] *= darken_factor  # Darken the pixels where z is 0
+        axes[-1].imshow(X_with_z, vmin=range[0], vmax=range[1], cmap=y_cmap)
+        axes[-1].set_title("Prediction Overlay")
+        axes[-1].axis("off")
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
+
 def plot_sample(X: np.ndarray,
                 y: np.ndarray,
                 X_range: Optional[tuple] = (-1, 1),

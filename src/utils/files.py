@@ -62,7 +62,7 @@ def npy_file_to_dict(file_path: str) -> Dict[str, np.ndarray]:
         file_path (str): The full path of the file to be loaded.
 
     Returns:
-        dict: A dictionary with the file name (without extension) as the key
+        (dict): A dictionary with the file name (without extension) as the key
               and the contents of the file (np.ndarray) as the value.
     """
     data_dict = {}
@@ -73,6 +73,35 @@ def npy_file_to_dict(file_path: str) -> Dict[str, np.ndarray]:
         data_dict[file_id] = np.load(file_path)
 
     return data_dict
+
+def dict_to_npy_file(file_path: str,
+                     data_dict: Dict[str, np.ndarray],
+                     ) -> None:
+    """
+    Saves a dictionary containing exactly one NumPy array to a .npy file at the specified path.
+    The saved file will be a compressed '.npy' file containing the dictionary 
+    with a single key and its corresponding NumPy array as the value.
+
+    Parameters:
+        file_path (str): The full path of the file where the dictionary will be saved.
+        data_dict (dict): A dictionary where the key is a string and the value is a NumPy array.
+    
+    Raises:
+        ValueError: If the dictionary does not contain exactly one key.
+    """
+    if not isinstance(data_dict, dict):
+        raise ValueError("The 'data_dict' parameter must be a dictionary.")
+    
+    if len(data_dict) != 1:
+        raise ValueError("The dictionary must contain exactly one key.")
+    
+    for key, value in data_dict.items():
+        if not isinstance(key, str):
+            raise ValueError("The key in the dictionary must be a string.")
+        if not isinstance(value, np.ndarray):
+            raise ValueError("The value in the dictionary must be a NumPy array.")
+    
+    np.save(file_path, data_dict)
 
 def load_arrays_from_folders(folder_path: str) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
     """
