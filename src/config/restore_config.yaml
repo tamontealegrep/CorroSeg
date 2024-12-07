@@ -1,7 +1,6 @@
 folders:
   data_folder: "./data/"
   raw_folder: "./data/raw/"
-  restored_folder: "./data/restored/"
 
 raw_data:
   train_folder: "./data/raw/X_train/images/"
@@ -34,5 +33,5 @@ well_columns:
     15: 1
 
 save_folders:
-  train: "./data/restored/train/"
-  test: "./data/restored/test/"
+  train: "./data/train/"
+  test: "./data/predict/"

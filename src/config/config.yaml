@@ -1,13 +1,13 @@
 folders:
-  train: "./data/restored/train/"
-  test: "./data/restored/test/"
+  train: "./data/train/"
+  test: "./data/predict/"
   model: "./model/"
 
 networks:
   unet:
     input_channels: 1
     output_channels: 1
-    base_channels: 6
+    base_channels: 8
     num_layers: 2
     encoder_block_type: "RRConvBlock"
     bottleneck_block_type: "RRConvBlock"
@@ -46,7 +46,7 @@ networks:
 
 manager:
   dataset_class: "CasingThicknessDataset"
-  loss_class: "IoULoss"
+  loss_class: "IoUFocalLoss"
   optimizer_class: "Adam"
   scaler_type: "robust"
   input_shape:
