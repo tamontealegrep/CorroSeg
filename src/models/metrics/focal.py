@@ -10,7 +10,7 @@ def focal_index(outputs: torch.Tensor,
                 alpha: Optional[float] = 0.25,
                 gamma: Optional[float] = 2.0,
                 smooth: Optional[float] = 1e-6,
-                ) -> torch.Tensor:
+                ) -> float:
     """
     Calculate the Focal Loss index for each example (pixel) in the batch.
 
@@ -22,11 +22,11 @@ def focal_index(outputs: torch.Tensor,
         smooth (float, optional): Small constant to avoid log(0).
 
     Returns:
-        (torch.Tensor): The computed Focal Loss for each pixel in the batch.
+        (float): The mean Focal Loss in the batch.
     """
     p_t = outputs * targets + (1 - outputs) * (1 - targets)
-
-    return - alpha * (1 - p_t) ** gamma * torch.log(p_t + smooth)
+    index = - alpha * (1 - p_t) ** gamma * torch.log(p_t + smooth)
+    return index.mean()
 
 class FocalLoss(nn.Module):
     """
@@ -39,7 +39,7 @@ class FocalLoss(nn.Module):
         smooth (float, optional): Small constant to avoid log(0).
     """
     def __init__(self, 
-                alpha: Optional[float] = 1.5,
+                alpha: Optional[float] = 0.25,
                 gamma: Optional[float] = 2.0,
                 smooth: Optional[float] = 1e-6):
         super(FocalLoss, self).__init__()
@@ -56,6 +56,6 @@ class FocalLoss(nn.Module):
         focal_idx = focal_index(outputs, targets, self.alpha, self.gamma, self.smooth)
 
         # Return the mean focal loss over all pixels in the batch
-        return focal_idx.mean()
+        return focal_idx
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
