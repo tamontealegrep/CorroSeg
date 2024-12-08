@@ -243,6 +243,57 @@ class ModelManager():
         scaler = self.scaler_fn(X, **self.scaler_params)
         self.scaler = scaler
 
+    def setup_train_data(self,
+            X: Dict[Any,np.ndarray],
+            y: Dict[Any,np.ndarray],
+            height_stride: Optional[int] = 0,
+            width_stride: Optional[int] = 18,
+            expand: Optional[bool] = True,
+            augmented_ratio: Optional[float] = 0.5,
+            ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+        """
+        Prepares the data for training, applying preprocessing and augmentation.
+
+        Parameters:
+            X (Dict[Any, np.ndarray]): Input feature array.
+            y (Dict[Any, np.ndarray]): Target array.
+            height_stride (int, optional): Stride in the height direction. Default is 0.
+            width_stride (int, optional): Stride in the width direction. Default is 18.
+            expand (bool, optional): Whether to expand the data for lateral continuity. Default is True.
+            augmented_ratio (float, optional): The ratio of data to augment. Default is 0.5.
+
+        Returns:
+            (tuple): A tuple containing.
+                X_train (np.ndarray): The processed training split of the feature array.
+                y_train (np.ndarray): The processed training split of the target array.
+        """
+        for key in X.keys():
+            if key not in y.keys():
+                raise FileNotFoundError(f"The file {key}.npy is not found in data/train/y.")
+            
+        if expand:
+            X, y = data_expand(X, y)
+        height_stride = height_stride if height_stride > 0 else self.height
+        width_stride = width_stride if width_stride > 0 else self.width
+        
+        X_train = []
+        y_train = []
+
+        for id in X.keys():
+            X_slices, y_slices = data_slice(X[id], y[id], self.height, height_stride, self.width, width_stride, self.default_value, True)
+            X_train.append(X_slices)
+            y_train.append(y_slices)
+
+        X_train = np.concatenate(X_train, axis=0)
+        y_train = np.concatenate(y_train, axis=0)
+
+        if self.scaler is None:
+            self.fit_scaler(X_train)
+
+        X_train = np.array([self._preprocess_data(X_train[i]) for i in range(X_train.shape[0])])
+        X_train, y_train = self._augment_data(X_train, y_train, augmented_ratio)
+        return X_train, y_train
+
     def setup_train_val_data(self,
             X: Dict[Any,np.ndarray],
             y: Dict[Any,np.ndarray],
@@ -273,6 +324,10 @@ class ModelManager():
                 X_val (np.ndarray): The processed validation split of the feature array.
                 y_val (np.ndarray): The processed validation split of the target array.
         """
+        for key in X.keys():
+            if key not in y.keys():
+                raise FileNotFoundError(f"The file {key}.npy is not found in data/train/y.")
+            
         X_train, y_train, X_val, y_val = self._train_val_split(X,
                                                                y,
                                                                height_stride=height_stride,

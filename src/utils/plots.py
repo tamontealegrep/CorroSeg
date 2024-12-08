@@ -2,10 +2,87 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import PIL
+from PIL import Image
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from typing import Tuple, Union, Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+def _clip_and_scale_array(
+        data: np.ndarray,
+        data_range: Tuple[Union[int, float], Union[int, float]],
+        scale_range: Optional[Tuple[Union[int, float], Union[int, float]]] = (0,1),
+        ) -> np.ndarray:
+    """
+    Clips the values outside the range [data_range[0], data_range[1]], 
+    then scales the array to the range [scale_range[0], scale_range[1]].
+
+    Parameters:
+        data (numpy.ndarray): The input array to be processed.
+        data_range (tuple): A tuple (min, max) defining the range of values to clip in the input data.
+        scale_range (tuple): A tuple (min, max) defining the range to scale the clipped data to. Default [0, 1]
+    
+    Returns:
+        numpy.ndarray: The clipped and scaled array within the range [scale_range[0], scale_range[1]].
+    
+    Raises:
+        ValueError: If the ranges are not tuples of length 2 or if the min value is greater than the max value.
+    """
+    if len(data_range) != 2:
+        raise ValueError("data_range must be a tuple (min, max)")
+    
+    if data_range[0] > data_range[1]:
+        raise ValueError(f"data_range max {data_range[1]} must be greater than data_range min {data_range[0]}")
+
+    if len(scale_range) != 2:
+        raise ValueError("scale_range must be a tuple (min, max)")
+    
+    if scale_range[0] > scale_range[1]:
+        raise ValueError(f"scale_range max {scale_range[1]} must be greater than scale_range min {scale_range[0]}")
+
+    data_clipped = np.clip(data, data_range[0], data_range[1])
+    data_scaled = scale_range[0] + (data_clipped - data_range[0]) * (scale_range[1] - scale_range[0]) / (data_range[1] - data_range[0])
+    
+    return data_scaled
+
+def np_array_to_pil(
+        data: np.ndarray,
+        data_range: Tuple[Union[int, float], Union[int, float]],
+        scale_range: Optional[Tuple[Union[int, float], Union[int, float]]] = (0,1),
+        cmap_name: Optional[str] = "gray") -> PIL.Image.Image:
+    """
+    Converts a numpy array to a PIL image using a colormap, with optional clipping and scaling.
+
+    The function first clips and scales the input data to the specified `scale_range` based on the provided 
+    `data_range`, then applies a colormap (such as 'gray', 'viridis', etc.) to the normalized data. The resulting 
+    color-mapped data is then converted into a PIL Image.
+
+    Parameters:
+        data (numpy.ndarray): The input array to be converted to a PIL image.
+        data_range (tuple): A tuple (min, max) defining the range of values in the input `data` to be clipped.
+        scale_range (tuple, optional): A tuple (min, max) defining the range to scale the clipped data to. Defaults to (0, 1).
+        cmap_name (str, optional): The name of the matplotlib colormap to apply. Defaults to 'gray'.
+
+    Returns:
+        PIL.Image.Image: A PIL Image object with the color-mapped data.
+
+    Notes:
+        - The input data will be normalized to the range [0, 1] before applying the colormap.
+        - The colormap is applied using matplotlib's `get_cmap` function.
+        - The default colormap is 'gray', but you can specify other colormaps like 'viridis', 'plasma', etc.
+    """
+    norm_data = _clip_and_scale_array(data,data_range,scale_range)
+
+    cmap = cm.get_cmap(cmap_name)
+
+    colored_data = cmap(norm_data)
+    colored_data = (colored_data[:, :, :] * 255).astype(np.uint8)
+
+    pil_image = Image.fromarray(colored_data)
+    
+    return pil_image
 
 def plot_data(X: np.ndarray,
               y: Optional[np.ndarray] = None,
