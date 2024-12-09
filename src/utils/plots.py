@@ -51,7 +51,8 @@ def np_array_to_pil(
         data: np.ndarray,
         data_range: Tuple[Union[int, float], Union[int, float]],
         scale_range: Optional[Tuple[Union[int, float], Union[int, float]]] = (0,1),
-        cmap_name: Optional[str] = "gray") -> PIL.Image.Image:
+        cmap_name: Optional[str] = "gray",
+        output_width: Optional[int] = None) -> PIL.Image.Image:
     """
     Converts a numpy array to a PIL image using a colormap, with optional clipping and scaling.
 
@@ -64,7 +65,8 @@ def np_array_to_pil(
         data_range (tuple): A tuple (min, max) defining the range of values in the input `data` to be clipped.
         scale_range (tuple, optional): A tuple (min, max) defining the range to scale the clipped data to. Defaults to (0, 1).
         cmap_name (str, optional): The name of the matplotlib colormap to apply. Defaults to 'gray'.
-
+        output_width (int, optional): The desired width of the output image. Default None.
+    
     Returns:
         PIL.Image.Image: A PIL Image object with the color-mapped data.
 
@@ -72,6 +74,7 @@ def np_array_to_pil(
         - The input data will be normalized to the range [0, 1] before applying the colormap.
         - The colormap is applied using matplotlib's `get_cmap` function.
         - The default colormap is 'gray', but you can specify other colormaps like 'viridis', 'plasma', etc.
+        - The aspect ratio of the image is maintained when resizing.
     """
     norm_data = _clip_and_scale_array(data,data_range,scale_range)
 
@@ -81,6 +84,12 @@ def np_array_to_pil(
     colored_data = (colored_data[:, :, :] * 255).astype(np.uint8)
 
     pil_image = Image.fromarray(colored_data)
+
+    if output_width is not None:
+        width, height = pil_image.size
+        output_height = int((output_width / width) * height)
+
+        pil_image = pil_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
     
     return pil_image
 
