@@ -106,7 +106,7 @@ def train(model: nn.Module,
             print(f'| Epoch [{epoch+1}/{num_epochs}] | Time: {end_time-start_time:.1f} |\n'
                   f'| Train Loss: {train_loss:.4f} |\n')
 
-        plot_training(model)
+        #plot_training(model)
 
 def plot_training(model: torch.nn.Module,
                   save_path: Optional[str] = None) -> None:
