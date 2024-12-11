@@ -1,4 +1,5 @@
 
+import time
 import tkinter as tk
 from tkinter import messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -25,6 +26,10 @@ def train_model(
         num_epochs: tk.StringVar,
         window: tk.Widget = None,
         canvas: FigureCanvasTkAgg = None,
+        epoch_label: tk.Label = None,
+        time_label: tk.Label = None,
+        train_loss_label: tk.Label = None,
+        val_loss_label: tk.Label = None
 ) -> None:
     """
     Trains the model using the configuration specified by the input parameters.
@@ -77,9 +82,16 @@ def train_model(
         train_loader = model.build_dataloader(train_dataset, int(batch_size.get()), True)
         val_loader = model.build_dataloader(val_dataset, int(batch_size.get()), True)
                 
-        for _ in range(int(num_epochs.get())):
+        for epoch in range(int(num_epochs.get())):
+            start_time = time.time() 
             model.train(train_loader, val_loader, num_epochs=1)
+            epoch_time = time.time() - start_time
 
+            epoch_label.config(text=f"Epoch: {epoch+1}/{num_epochs.get()}")
+            time_label.config(text=f"Epoch Time: {epoch_time:.2f}s")
+            train_loss_label.config(text=f"Train Loss: {model.network.results['train_loss'][-1]:.5f}")
+            val_loss_label.config(text=f"Val Loss: {model.network.results['val_loss'][-1]:.5f}")
+            
             plot_training(model.network, canvas) 
             window.update_idletasks()
 
@@ -93,8 +105,15 @@ def train_model(
         train_dataset = model.build_dataset(X_train, y_train, random_transformation, config["random_transformation"])
         train_loader = model.build_dataloader(train_dataset, int(batch_size.get()), True)
 
-        for _ in range(int(num_epochs.get())):
+        for epoch in range(int(num_epochs.get())):
+            start_time = time.time() 
             model.train(train_loader, num_epochs=1)
+            epoch_time = time.time() - start_time
+
+            epoch_label.config(text=f"Epoch: {epoch+1}/{num_epochs.get()}")
+            time_label.config(text=f"Epoch Time: {epoch_time:.2f}s")
+            train_loss_label.config(text=f"Train Loss: {model.network.results['train_loss'][-1]:.5f}")
+            val_loss_label.config(text=f"Val Loss: NaN")
 
             plot_training(model.network, canvas)
             window.update_idletasks()

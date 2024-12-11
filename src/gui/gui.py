@@ -338,6 +338,21 @@ class Gui:
         expand, _ = create_checkbox(train_frame,4,0,"Horizontal Expansion",train_default["expand"],pady= 5)
         augmented_ratio = create_slider(train_frame,5,0,"Augmented Ratio:",0,1,train_default["augmented_ratio"],resolution=0.1,pady=5)
 
+        info_frame = tk.LabelFrame(frame, text="Information")
+        info_frame.grid(row=1, column=0, padx=20, pady=10)
+
+        epoch_label = tk.Label(info_frame, text="Epoch: 0/0")
+        epoch_label.grid(row=2, column=0, pady=5)
+
+        time_label = tk.Label(info_frame, text="Epoch Time: 0s")
+        time_label.grid(row=3, column=0, pady=5)
+
+        train_loss_label = tk.Label(info_frame, text="Train Loss: 0.0")
+        train_loss_label.grid(row=4, column=0, pady=5)
+
+        val_loss_label = tk.Label(info_frame, text="Val Loss: 0.0")
+        val_loss_label.grid(row=5, column=0, pady=5)
+
         plot_frame = tk.Frame(window)
         plot_frame.grid(row=0, column=1, padx=10, pady=10)
 
@@ -352,12 +367,21 @@ class Gui:
         canvas.get_tk_widget().pack(padx=5, pady=5)
 
         if len(self.model.network.results.get("train_loss", [])) > 0:
-            plot_training(self.model.network, canvas) 
+            plot_training(self.model.network, canvas)
+            train_loss = self.model.network.results['train_loss'][-1]
+            val_loss = self.model.network.results['val_loss'][-1]
+
+            train_loss_label.config(text=f"Train Loss: {train_loss:.5f}")
+            if val_loss is None:
+                val_loss_label.config(text=f"Val Loss: NaN")
+            else:
+                val_loss_label.config(text=f"Val Loss: {val_loss:.5f}")
 
         save_button = tk.Button(frame, text="Train model", command=lambda: train_model(
-            self.model, fraction, seed, expand, augmented_ratio, batch_size, num_epochs, window, canvas
+            self.model, fraction, seed, expand, augmented_ratio, batch_size, num_epochs, window, canvas,
+            epoch_label, time_label, train_loss_label, val_loss_label
         ))
-        save_button.grid(row=1, column=0, pady=10)
+        save_button.grid(row=2, column=0, pady=10)
 
     def load_X(self):
         X, X_name = load_file()
