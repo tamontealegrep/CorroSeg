@@ -1,24 +1,23 @@
 
-import tkinter as tk
-from tkinter import filedialog, messagebox
-
-
+import numpy as np
 import tkinter as tk
 from tkinter import Toplevel, filedialog, messagebox
 from PIL import Image, ImageTk
 
-from src.utils.plots import np_array_to_pil
+
 
 from src.models.manager import ModelManager
 from src.models.architectures.networks.unet import Unet
 from src.models.dataset.transformations import random_transformation
-from src.utils.files import load_config, load_arrays_from_folders, npy_file_to_dict
+
+from src.utils.files import load_config, dict_to_npy_file, load_arrays_from_folders, npy_file_to_dict
+from src.utils.plots import np_array_to_pil
 
 from src.gui.utils.load import load_model
 from src.gui.utils.save import save_model
 from src.gui.utils.train import train_model
 from src.gui.utils.new import loss_options_manager, make_model
-from src.gui.utils.predict import load_file, predict_model
+from src.gui.utils.files import load_file
 from src.gui.utils.plot import update_canvas
 from src.gui.utils.widgets import create_checkbox, create_entry, create_option_menu, create_slider
 from src.gui.utils.utils import toggle_widgets_by_bool, scrollbar_command
@@ -40,10 +39,13 @@ class Gui:
         self.root.title("CorroSeg")
 
         self.model:ModelManager = None
-        self.file = None
-        self.file_name = None
-        self.mask = None
-        self.prediction = None
+        self.X: np.ndarray = None
+        self.y: np.ndarray = None
+        self.y_pred: np.ndarray = None
+        self.well_name: str = None
+        self.mask_name: str = None
+        self.data_cmap: tk.StringVar = None
+        self.mask_cmap: tk.StringVar = None
 
         self.root_widgets()
 
@@ -63,35 +65,127 @@ class Gui:
         load_model_button = tk.Button(model_frame, text="Load Model", command=self.model_load)
         load_model_button.grid(row=0,column=1,padx=5, pady=10)
 
-        load_model_button = tk.Button(model_frame, text="Save Model", command=self.model_save)
-        load_model_button.grid(row=0,column=2,padx=5, pady=10)
+        self.save_model_button = tk.Button(model_frame, text="Save Model", command=self.model_save)
+        self.save_model_button.grid(row=0,column=2,padx=5, pady=10)
+
+        files_frame = tk.LabelFrame(frame, text="Files")
+        files_frame.grid(row=1, column=0, padx=20, pady=10)
+
+        self.file_label = tk.Label(files_frame, text="None")
+        self.file_label.grid(row=0, column=0, padx=5, pady=0)
+
+        load_file_button = tk.Button(files_frame, text="Load File", command=self.load_X)
+        load_file_button.grid(row=1,column=0,padx=5, pady=10)
+
+        self.mask_label = tk.Label(files_frame, text="None")
+        self.mask_label.grid(row=0, column=1, padx=5, pady=0)
+        
+        self.load_mask_button = tk.Button(files_frame, text="Load Mask", command=self.load_y)
+        self.load_mask_button.grid(row=1,column=1,padx=5, pady=10)
 
         operations_frame = tk.LabelFrame(frame, text="Operations")
-        operations_frame.grid(row=1, column=0, padx=20, pady=10)
+        operations_frame.grid(row=2, column=0, padx=20, pady=10)
 
-        train_button = tk.Button(operations_frame, text="Train", command=self.model_train)
-        train_button.grid(row=0,column=0,padx=5, pady=10)
+        self.train_button = tk.Button(operations_frame, text="Train", command=self.model_train)
+        self.train_button.grid(row=0,column=0,padx=5, pady=10)
 
-        predict_button = tk.Button(operations_frame, text="Predict", command=self.model_predict)
-        predict_button.grid(row=0,column=1,padx=5, pady=10)
+        self.predict_button = tk.Button(operations_frame, text="Predict", command=self.model_predict)
+        self.predict_button.grid(row=0,column=1,padx=5, pady=10)
 
         plot_frame = tk.LabelFrame(frame, text="Plot")
-        plot_frame.grid(row=2, column=0, padx=20, pady=10)
+        plot_frame.grid(row=3, column=0, padx=20, pady=10)
 
-        plot_button = tk.Button(plot_frame, text="Plot", command=self.plot)
-        plot_button.grid(row=0,column=0,padx=5, pady=10)
+        self.data_cmap = tk.StringVar(value="seismic")
+        self.mask_cmap = tk.StringVar(value="viridis") 
 
-        save_plot_button = tk.Button(plot_frame, text="Save Plot", command=self.save_plot)
-        save_plot_button.grid(row=0,column=1,padx=5, pady=10)
+        data_cmap_label = tk.Label(plot_frame, text="Data Colormap:")
+        data_cmap_label.grid(row=0, column=0, padx=5, pady=0)
+
+        self.data_cmap_menu = tk.OptionMenu(plot_frame, self.data_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
+        self.data_cmap_menu.grid(row=0, column=1, padx=5, pady=0)
+
+        mask_cmap_label = tk.Label(plot_frame, text="Mask Colormap:")
+        mask_cmap_label.grid(row=1, column=0, padx=5, pady=5)
+
+        self.mask_cmap_menu = tk.OptionMenu(plot_frame, self.mask_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
+        self.mask_cmap_menu.grid(row=1, column=1, padx=5, pady=10)
+
+        self.plot_button = tk.Button(plot_frame, text="Plot", command=self.plot)
+        self.plot_button.grid(row=0,column=2, rowspan=2, padx=10, pady=10)
+
+        predict_frame = tk.LabelFrame(frame, text="Prediction")
+        predict_frame.grid(row=4, column=0, padx=20, pady=10)
+
+        predict_subframe_up = tk.Frame(predict_frame)
+        predict_subframe_up.pack()
+
+        self.save_cmap = tk.StringVar(value="viridis")
+
+        save_cmap_label = tk.Label(predict_subframe_up, text="Colormap:")
+        save_cmap_label.grid(row=0, column=0, padx=5, pady=0)
+
+        self.save_cmap_menu = tk.OptionMenu(predict_subframe_up, self.save_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
+        self.save_cmap_menu.grid(row=0, column=1, padx=5, pady=10)
+
+        self.save_plot_button = tk.Button(predict_subframe_up, text="Save PNG", command=self.save_png)
+        self.save_plot_button.grid(row=0,column=2, padx=10, pady=10)
+
+        predict_subframe_down = tk.Frame(predict_frame)
+        predict_subframe_down.pack()
+
+        self.save_csv_button = tk.Button(predict_subframe_down, text="Save CSV", command=self.save_csv)
+        self.save_csv_button.grid(row=0,column=0, padx=10, pady=10)
+
+        self.save_npy_button = tk.Button(predict_subframe_down, text="Save NPY", command=self.save_npy)
+        self.save_npy_button.grid(row=0,column=1, padx=10, pady=10)
+
+        self.update_root_widgets()
+
+    def update_root_widgets(self):
+        if self.model is None:
+            self.save_model_button.config(state=tk.DISABLED)
+            self.train_button.config(state=tk.DISABLED)
+        else:
+            self.save_model_button.config(state=tk.NORMAL)
+            self.train_button.config(state=tk.NORMAL)
+
+        if self.X is None:
+            self.load_mask_button.config(state=tk.DISABLED)
+            self.plot_button.config(state=tk.DISABLED)
+            self.data_cmap_menu.config(state=tk.DISABLED)
+            self.mask_cmap_menu.config(state=tk.DISABLED)
+        else:
+            self.load_mask_button.config(state=tk.NORMAL)
+            self.plot_button.config(state=tk.NORMAL)
+            self.data_cmap_menu.config(state=tk.NORMAL)
+            self.mask_cmap_menu.config(state=tk.NORMAL)
+
+        if self.model is None or self.X is None:
+            self.predict_button.config(state=tk.DISABLED)
+        else:
+            self.predict_button.config(state=tk.NORMAL)
+
+        if self.y_pred is None:
+            self.save_plot_button.config(state=tk.DISABLED)
+            self.save_csv_button.config(state=tk.DISABLED)
+            self.save_npy_button.config(state=tk.DISABLED)
+            self.save_cmap_menu.config(state=tk.DISABLED)
+        else:
+            self.save_plot_button.config(state=tk.NORMAL)
+            self.save_csv_button.config(state=tk.NORMAL)
+            self.save_npy_button.config(state=tk.NORMAL)
+            self.save_cmap_menu.config(state=tk.NORMAL)
 
     def test_function(self):
         print("OK")
 
     def model_load(self):
         load_model(self)
+        self.update_root_widgets()
 
     def model_save(self):
         save_model(self)
+        self.update_root_widgets()
 
     def model_new(self):
         window = Toplevel(self.root)
@@ -174,7 +268,7 @@ class Gui:
             skip_connections,
             [s_activation_menu, s_dropout_prob, s_num_recurrences, s_residual_check, s_cbam_check, s_cbam_reduction, s_cbam_activation_menu]
             )
-        
+
         skip_connections.trace("w", lambda *args: toggle_skip_dependences())
 
         parameters_frame = tk.Frame(frame)
@@ -221,11 +315,14 @@ class Gui:
                     attention_gates, output_activation,
                     loss_class, alpha, beta, gamma, base_weight, focal_weight, learning_rate, weight_decay)
                 window.destroy()
+                self.update_root_widgets()
             else:
                 pass
 
         save_button = tk.Button(frame, text="Make model", command=new_model_confirmation)
         save_button.grid(row=1, columnspan=3, pady=10)
+
+        loss_options_manager(loss_class, alpha, beta, gamma, base_weight, focal_weight)
 
     def model_train(self):
         window = tk.Toplevel(self.root)
@@ -249,97 +346,142 @@ class Gui:
         ))
         save_button.grid(row=1, column=0, pady=10)
 
+    def load_X(self):
+        X, X_name = load_file()
+
+        self.X = X
+        self.well_name = X_name
+        self.y = None
+        self.mask_name = None
+        self.y_pred = None
+
+        self.file_label.config(text=str(X_name))
+        self.mask_label.config(text=str("None"))
+
+        self.update_root_widgets()
+
+    def load_y(self):
+        y, y_name = load_file()
+
+        if self.X is not None and y.shape != self.X.shape:
+            messagebox.showerror("Error", "The File and the Mask must have the same shape.")
+            return
+
+        self.y = y
+        self.mask_name = y_name
+        self.mask_label.config(text=str(y_name))
+
     def model_predict(self):
-        window = tk.Toplevel(self.root)
-        window.title("Predict")
-        
-        frame = tk.Frame(window)
-        frame.pack()
-
-        file_frame = tk.LabelFrame(frame, text="File")
-        file_frame.grid(row=0, column=0, padx=20, pady=10)
-
-        name_label_var = tk.StringVar()
-        if self.file is None:
-            name_label_var.set("No file loaded")
-        else:
-            name_label_var.set(self.file_name)
-
-        name_label = tk.Label(file_frame, textvariable=name_label_var)
-        name_label.grid(row=0,column=0,pady=5, padx=10)
-
-        def load_file_and_update(self):
-            load_file(self)
-            
-            if self.file_name:
-                name_label_var.set(self.file_name)
-
-            if self.prediction:
-                self.prediction = None
-                
-        load_button = tk.Button(file_frame, text="Load File", command=lambda: load_file_and_update(self))
-        load_button.grid(row=1,column=0, pady=5, padx=5)
-        
-        predict_button = tk.Button(frame, text="Predict", command=lambda: predict_model(self))
-        predict_button.grid(row=1,column=0,pady=10)
+        try:
+            prediction = self.model.predict_well(self.X, **predict_default)
+            binary_mask = ((prediction) > threshold_default).astype(int)
+            self.y_pred = binary_mask
+            messagebox.showinfo("Success", "File processed successfully.")
+        except Exception as e:
+            messagebox.showerror("Error", f"The file could not be processed. Error: {e}")
+            return
+        self.update_root_widgets()
 
     def plot(self):
+        canvas_height, canvas_width = (500, 72)
+        section_height = 10000
+
         window = tk.Toplevel(self.root)
         window.title("Plot")
 
         frame = tk.Frame(window)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        if self.file is None and self.prediction is None:
-            messagebox.showerror("Error", "A file must be loaded and a prediction made.")
+        if self.X is None:
+            messagebox.showerror("Error", "A file must be loaded.")
             window.destroy()
-
-        canvas_size = (500, 72)  # (height, width)
+            return 
 
         data_img = np_array_to_pil(
-            self.file,
+            self.X,
             manager_default["value_range"],
-            cmap_name="seismic",
-            output_width=canvas_size[1]
+            cmap_name=self.data_cmap.get(),
+            output_width=canvas_width
         )
 
-        mask_img = np_array_to_pil(
-            self.prediction,
-            (0, 1),
-            cmap_name="viridis",
-            output_width=canvas_size[1]
-        )
+        images = {"data": data_img }
 
-        scroll_region = data_img.size  # (width, height)
-        total_height = scroll_region[1]
-        section_height = 10000
+        img_width, img_height = data_img.size # (width, height)
 
-        num_sections = total_height // section_height
-        if total_height % section_height != 0:
+        num_sections = img_height // section_height
+        if img_height % section_height != 0:
             num_sections += 1 
 
         plots_frame = tk.LabelFrame(frame, text="Images")
-        plots_frame.grid(row=0, column=0, padx=20, pady=20)
+        plots_frame.grid(row=0, column=0, padx=20, pady=20,sticky="ew")
 
         data_frame = tk.LabelFrame(plots_frame, text="Data")
         data_frame.grid(row=0, column=0, padx=20, pady=20)
 
-        mask_frame = tk.LabelFrame(plots_frame, text="Mask")
-        mask_frame.grid(row=0, column=1, padx=20, pady=20)
-
-        data_canvas = tk.Canvas(data_frame, height=canvas_size[0], width=canvas_size[1])
+        data_canvas = tk.Canvas(data_frame, height=canvas_height, width=canvas_width)
         data_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        mask_canvas = tk.Canvas(mask_frame, height=canvas_size[0], width=canvas_size[1])
-        mask_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        canvases = {"data": data_canvas}
 
-        scrollbar = tk.Scrollbar(plots_frame, orient=tk.VERTICAL)
-        scrollbar.grid(row=0, column=2, sticky='ns', padx=20, pady=20)
+        canvas_list = [data_canvas]
         
-        scrollbar.config(command=lambda *args: scrollbar_command([data_canvas, mask_canvas], *args))
+        column = 1
+
+        if self.y is not None:
+            mask_img = np_array_to_pil(
+                self.y,
+                (0, 1),
+                cmap_name=self.mask_cmap.get(),
+                output_width=canvas_width
+            )
+
+            images["mask"] = mask_img
+            
+            mask_frame = tk.LabelFrame(plots_frame, text="Mask")
+            mask_frame.grid(row=0, column=column, padx=20, pady=20)
+
+            mask_canvas = tk.Canvas(mask_frame, height=canvas_height, width=canvas_width)
+            mask_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            canvases["mask"] = mask_canvas
+
+            canvas_list.append(mask_canvas)
+
+            column += 1
+
+        if self.y_pred is not None:
+            pred_img = np_array_to_pil(
+                self.y_pred,
+                (0, 1),
+                cmap_name=self.mask_cmap.get(),
+                output_width=canvas_width
+            )
+
+            images["pred"] = pred_img
+
+            pred_frame = tk.LabelFrame(plots_frame, text="Prediction")
+            pred_frame.grid(row=0, column=column, padx=20, pady=20)
+
+            pred_canvas = tk.Canvas(pred_frame, height=canvas_height, width=canvas_width)
+            pred_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            canvases["pred"] = pred_canvas
+
+            canvas_list.append(pred_canvas)
+
+            column += 1
+        
+        scrollbar = tk.Scrollbar(plots_frame, orient=tk.VERTICAL)
+        scrollbar.grid(row=0, column=column, sticky='ns', padx=20, pady=20)
+        
+        scrollbar.config(command=lambda *args: scrollbar_command(canvas_list, *args))
 
         data_canvas.config(yscrollcommand=scrollbar.set)
-        mask_canvas.config(yscrollcommand=scrollbar.set)
+
+        if self.y is not None:
+            mask_canvas.config(yscrollcommand=scrollbar.set)
+        if self.y_pred is not None:
+            pred_canvas.config(yscrollcommand=scrollbar.set)
 
         section_index = 0
 
@@ -347,7 +489,7 @@ class Gui:
             nonlocal section_index
             if section_index < num_sections - 1:
                 section_index += 1
-                update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+                update_canvas(images, canvases, section_height, section_index)
                 slider.set(section_index)
                 update_buttons()
 
@@ -355,14 +497,14 @@ class Gui:
             nonlocal section_index
             if section_index > 0:
                 section_index -= 1
-                update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+                update_canvas(images, canvases, section_height, section_index)
                 slider.set(section_index)
                 update_buttons()
 
         def update_slider(value):
             nonlocal section_index
             section_index = int(value)
-            update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+            update_canvas(images, canvases, section_height, section_index)
             slider.set(section_index)
             update_buttons()
 
@@ -389,11 +531,79 @@ class Gui:
         next_button = tk.Button(button_frame, text="Next", command=next_section)
         next_button.grid(row=0, column=2, padx=5) 
 
-        update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+        update_canvas(images, canvases, section_height, section_index)
         update_buttons()
 
+    def save_csv(self):
+        if self.y_pred is None:
+            messagebox.showwarning("Error", "There is no prediction to save.")
+            return
+        
+        save_path = filedialog.asksaveasfilename(
+            title="Save CSV",
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv")]
+        )
+
+        if save_path and not save_path.endswith(".csv"):
+            save_path += ".csv"
+
+        if save_path:
+            try:
+                np.savetxt(save_path, self.y_pred, delimiter=',', fmt='%d')
+                messagebox.showinfo("Success", f"File saved successfully at {save_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while saving the file: {e}")
+
+    def save_npy(self):
+        if self.y_pred is None:
+            messagebox.showwarning("Error", "There is no prediction to save.")
+            return
+        
+        save_path = filedialog.asksaveasfilename(
+            title="Save NPY",
+            defaultextension=".npy",
+            filetypes=[("NumPy files", "*.npy")]
+        )
+
+        if save_path and not save_path.endswith(".npy"):
+            save_path += ".npy"
+
+        if save_path:
+            try:
+                np.save(save_path, self.y_pred)
+                messagebox.showinfo("Success", f"File saved successfully at {save_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while saving the file: {e}")
+
+    def save_png(self):
+        if self.y_pred is None:
+            messagebox.showwarning("Error", "There is no prediction to save.")
+            return
+        
+        save_path = filedialog.asksaveasfilename(
+            title="Save PNG",
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png")]
+        )
+
+        if save_path and not save_path.endswith(".png"):
+            save_path += ".png"
+
+        if save_path:
+            img = np_array_to_pil(
+                self.y_pred,
+                (0, 1),
+                cmap_name=self.save_cmap.get(),)
+            
+            try:
+                img.save(save_path)
+                messagebox.showinfo("Success", f"File saved successfully at {save_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while saving the file: {e}")
+
     def save_plot(self):
-        if self.prediction is None:
+        if self.y_pred is None:
             messagebox.showwarning("Error", "There is no prediction to save.")
             return
 
@@ -404,13 +614,13 @@ class Gui:
         )
 
         data_img = np_array_to_pil(
-            self.file,
+            self.X,
             manager_default["value_range"],
             cmap_name="seismic",
         )
 
         mask_img = np_array_to_pil(
-            self.prediction,
+            self.y_pred,
             (0, 1),
             cmap_name="viridis",
         )
