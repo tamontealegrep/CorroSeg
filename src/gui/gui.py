@@ -1,4 +1,6 @@
 
+import platform
+
 import numpy as np
 import tkinter as tk
 from tkinter import Toplevel, filedialog, messagebox
@@ -43,6 +45,8 @@ class Gui:
         self.mask_name: str = None
         self.data_cmap: tk.StringVar = None
         self.mask_cmap: tk.StringVar = None
+        self.canvas_height: tk.StringVar = None
+        self.canvas_width : tk.StringVar = None
 
         self.root_widgets()
 
@@ -107,8 +111,23 @@ class Gui:
         self.mask_cmap_menu = tk.OptionMenu(plot_frame, self.mask_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
         self.mask_cmap_menu.grid(row=1, column=1, padx=5, pady=10)
 
+        self.canvas_height = tk.StringVar(value="500")
+        self.canvas_width = tk.StringVar(value="72")
+
+        self.height_label = tk.Label(plot_frame, text="Height:")
+        self.height_label.grid(row=2, column=0, padx=5, pady=5)
+
+        self.height_entry = tk.Entry(plot_frame, textvariable=self.canvas_height, width=5)
+        self.height_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        self.width_label = tk.Label(plot_frame, text="Width:")
+        self.width_label.grid(row=2, column=2, padx=5, pady=5)
+
+        self.width_entry = tk.Entry(plot_frame, textvariable=self.canvas_width, width=5)
+        self.width_entry.grid(row=2, column=3, padx=5, pady=5)
+
         self.plot_button = tk.Button(plot_frame, text="Plot", command=self.plot)
-        self.plot_button.grid(row=0,column=2, rowspan=2, padx=10, pady=10)
+        self.plot_button.grid(row=0,column=2, rowspan=3, padx=10, pady=10)
 
         predict_frame = tk.LabelFrame(frame, text="Prediction")
         predict_frame.grid(row=4, column=0, padx=20, pady=10)
@@ -151,11 +170,15 @@ class Gui:
             self.plot_button.config(state=tk.DISABLED)
             self.data_cmap_menu.config(state=tk.DISABLED)
             self.mask_cmap_menu.config(state=tk.DISABLED)
+            self.height_entry.config(state=tk.DISABLED)
+            self.mask_cmap_menu.config(state=tk.DISABLED)
         else:
             self.load_mask_button.config(state=tk.NORMAL)
             self.plot_button.config(state=tk.NORMAL)
             self.data_cmap_menu.config(state=tk.NORMAL)
             self.mask_cmap_menu.config(state=tk.NORMAL)
+            self.mask_cmap_menu.config(state=tk.NORMAL)
+            self.height_entry.config(state=tk.NORMAL)
 
         if self.model is None or self.X is None:
             self.predict_button.config(state=tk.DISABLED)
@@ -166,12 +189,12 @@ class Gui:
             self.save_plot_button.config(state=tk.DISABLED)
             self.save_csv_button.config(state=tk.DISABLED)
             self.save_npy_button.config(state=tk.DISABLED)
-            self.save_cmap_menu.config(state=tk.DISABLED)
+            self.width_entry.config(state=tk.DISABLED)
         else:
             self.save_plot_button.config(state=tk.NORMAL)
             self.save_csv_button.config(state=tk.NORMAL)
             self.save_npy_button.config(state=tk.NORMAL)
-            self.save_cmap_menu.config(state=tk.NORMAL)
+            self.width_entry.config(state=tk.NORMAL)
 
     def test_function(self):
         print("OK")
@@ -338,6 +361,14 @@ class Gui:
         expand, _ = create_checkbox(train_frame,4,0,"Horizontal Expansion",train_default["expand"],pady= 5)
         augmented_ratio = create_slider(train_frame,5,0,"Augmented Ratio:",0,1,train_default["augmented_ratio"],resolution=0.1,pady=5)
 
+        def update_seed_state(value):
+            if float(value) == 0.0:
+                seed.config(state=tk.DISABLED)
+            else:
+                seed.config(state=tk.NORMAL)  
+
+        fraction.bind("<Motion>", lambda event: update_seed_state(fraction.get()))
+
         info_frame = tk.LabelFrame(frame, text="Information")
         info_frame.grid(row=1, column=0, padx=20, pady=10)
 
@@ -359,7 +390,7 @@ class Gui:
         plot_sub_frame = tk.LabelFrame(plot_frame, text="Training Plot")
         plot_sub_frame.grid(row=0, column=0, padx=20, pady=10)
 
-        fig, ax = plt.subplots(figsize=(5, 5))
+        fig, ax = plt.subplots(figsize=(6, 6))
         ax.clear()
         ax.set_axis_off() 
 
@@ -420,7 +451,9 @@ class Gui:
         self.update_root_widgets()
 
     def plot(self):
-        canvas_height, canvas_width = (500, 72)
+        #canvas_height, canvas_width = (500, 72)
+        canvas_height = int(self.canvas_height.get())
+        canvas_width = int(self.canvas_width.get())
         section_height = 10000
 
         window = tk.Toplevel(self.root)
@@ -520,6 +553,28 @@ class Gui:
         if self.y_pred is not None:
             pred_canvas.config(yscrollcommand=scrollbar.set)
 
+
+        def on_mouse_wheel(event, canvas_list, scrollbar):
+            current_os = platform.system()
+            if current_os == "Linux":
+                delta = event.delta / 120 
+            else:
+                delta = event.delta
+
+            if delta > 0: 
+                for canvas in canvas_list:
+                    canvas.yview_scroll(-1, "units") 
+            else:  
+                for canvas in canvas_list:
+                    canvas.yview_scroll(1, "units")
+
+            scrollbar.set(*canvas_list[0].yview())
+
+        for c in canvas_list:
+            c.bind("<MouseWheel>", lambda event, canvas_list=canvas_list, scrollbar=scrollbar: on_mouse_wheel(event, canvas_list, scrollbar))
+            c.bind("<Button-4>", lambda event, canvas_list=canvas_list, scrollbar=scrollbar: on_mouse_wheel(event, canvas_list, scrollbar))
+            c.bind("<Button-5>", lambda event, canvas_list=canvas_list, scrollbar=scrollbar: on_mouse_wheel(event, canvas_list, scrollbar))
+                
         section_index = 0
 
         def next_section():
