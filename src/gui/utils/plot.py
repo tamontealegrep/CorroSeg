@@ -1,5 +1,9 @@
 
+import torch
 from PIL import Image, ImageTk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from src.models.architectures.networks import Network
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -53,5 +57,39 @@ def update_canvas(images, canvases, section_height, section_index):
     # Update the scroll region of all canvases
     for canvas in canvases.values():
         canvas.config(scrollregion=(0, 0, crop_width, crop_height))
-        
+
+def plot_training(model: Network,
+                  canvas: FigureCanvasTkAgg) -> None:
+    """
+    Plots training curves of a results dictionary. Can update the plot in real-time using a Tkinter canvas.
+
+    Parameters:
+        model (Network): The model to be plotted. Needs to have the "results"
+            attribute {"train_loss": [...],"val_loss": [...]}
+        canvas (FigureCanvasTkAgg): Tkinter canvas to update the plot in real-time.
+    """
+
+    results = model.results
+    loss = results['train_loss']
+    val_loss = results['val_loss']
+    epochs = range(len(results['train_loss']))
+    
+    # Usamos la figura actual en lugar de crear una nueva
+    fig = canvas.figure
+    ax = fig.axes[0]  # Asumimos que hay solo un gráfico, por lo tanto tomamos el primer eje
+    
+    # Limpiamos los ejes para actualizarlos
+    ax.clear()
+    
+    # Actualizamos los datos del gráfico
+    ax.plot(epochs, loss, label='Train Loss')
+    ax.plot(epochs, val_loss, label='Val Loss')
+    ax.set_title('Training Loss')
+    ax.set_xlabel('Epochs')
+    ax.set_ylabel('Loss')
+    ax.legend()
+
+    canvas.figure = fig
+    canvas.draw() 
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

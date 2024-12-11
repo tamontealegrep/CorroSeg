@@ -59,6 +59,7 @@ def train(model: nn.Module,
           train_loader: torch.utils.data.DataLoader,
           val_loader: Optional[torch.utils.data.DataLoader] = None,
           num_epochs: Optional[int] = 10,
+          verbose: Optional[str] = None,
           ) -> None:
     """
     Train and optionally validate the given model for a specified number of epochs.
@@ -75,11 +76,18 @@ def train(model: nn.Module,
         train_loader (torch.utils.data.DataLoader): DataLoader for the training data.
         val_loader (torch.utils.data.DataLoader, optional): DataLoader for the validation data. Default is None.
         num_epochs (int, optional): Number of epochs to train the model. Default is 10.
+        verbose (str, optional): Controls the verbosity of the output. 
+            - None: no output.
+            - "simple": prints training progress.
+            - "full": prints progress and plots.
 
     Returns:
         None: The function modifies the model in place and records the training 
             (and validation) results in the model's `results` attribute.
     """
+    if verbose not in [None, "simple", "full"]:
+        raise ValueError(f"Invalid value for 'verbose': {verbose}. Expected None, 'simple', or 'full'.")
+
     model.to(model.device)
 
     results = {"train_loss": [], "val_loss": []}
@@ -98,15 +106,21 @@ def train(model: nn.Module,
         model.results["train_loss"].append(train_loss)
         model.results["val_loss"].append(val_loss)
 
-        clear_output(wait=True)
-        if val_loss is not None:
-            print(f'| Epoch [{epoch+1}/{num_epochs}] | Time: {end_time-start_time:.1f} |\n'
-                  f'| Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} |\n')
-        else:
-            print(f'| Epoch [{epoch+1}/{num_epochs}] | Time: {end_time-start_time:.1f} |\n'
-                  f'| Train Loss: {train_loss:.4f} |\n')
+        if verbose is None:
+            continue
 
-        #plot_training(model)
+        epoch_message = f'| Epoch [{epoch+1}/{num_epochs}] | Time: {end_time-start_time:.1f} |\n'
+        epoch_message += f'| Train Loss: {train_loss:.4f} '
+        if val_loss is not None:
+            epoch_message += f'| Val Loss: {val_loss:.4f} |\n'
+        else:
+            epoch_message += '| \n'
+
+        if verbose in ["simple", "full"]:
+            print(epoch_message)
+
+        if verbose == "full":
+            plot_training(model)
 
 def plot_training(model: torch.nn.Module,
                   save_path: Optional[str] = None) -> None:

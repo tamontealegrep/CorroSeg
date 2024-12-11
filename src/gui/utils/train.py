@@ -1,9 +1,12 @@
 
 import tkinter as tk
 from tkinter import messagebox
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.utils.files import load_config, load_arrays_from_folders
+from src.models.manager import ModelManager
 from src.models.dataset.transformations import random_transformation
+from src.gui.utils.plot import plot_training
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -13,13 +16,15 @@ train_default = config["train_validation"]
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 def train_model(
-        gui,
+        model: ModelManager,
         fraction: tk.StringVar,
         seed: tk.IntVar,
         expand: tk.BooleanVar,
         augmented_ratio: tk.StringVar,
         batch_size: tk.StringVar,
         num_epochs: tk.StringVar,
+        window: tk.Widget = None,
+        canvas: FigureCanvasTkAgg = None,
 ) -> None:
     """
     Trains the model using the configuration specified by the input parameters.
@@ -29,7 +34,7 @@ def train_model(
     without validation data, and handles data augmentation, batching, and randomization.
 
     Parameters:
-        gui (object): The GUI object, which provides access to the model's methods for loading data,
+        model (ModelManager): The ModelManager object, which provides access to the model's methods for loading data,
                       setting up the training process, and running training.
         fraction (tk.StringVar): Tkinter variable representing the fraction of the dataset to use for training.
         seed (tk.IntVar): Tkinter variable representing the random seed to ensure reproducibility of results.
@@ -37,6 +42,8 @@ def train_model(
         augmented_ratio (tk.StringVar): Tkinter variable representing the ratio of augmented data to apply during training.
         batch_size (tk.StringVar): Tkinter variable representing the batch size to use during training.
         num_epochs (tk.StringVar): Tkinter variable representing the number of epochs for training.
+                window (tk.Widget): The Tkinter window (root, Toplevel, Frame, or LabelFrame) to update during training.
+        canvas (FigureCanvasTkAgg): Tkinter canvas to update the plot in real-time.
 
     Returns:
         None: This function does not return any value. It updates the model's state through training.
@@ -62,27 +69,35 @@ def train_model(
     X, y = load_arrays_from_folders(config["folders"]["train"])
     
     if dictionary["fraction"] > 0:
-        X_train, y_train, X_val, y_val = gui.model.setup_train_val_data(X, y, **dictionary)
+        X_train, y_train, X_val, y_val = model.setup_train_val_data(X, y, **dictionary)
 
-        train_dataset = gui.model.build_dataset(X_train, y_train, random_transformation, config["random_transformation"])
-        val_dataset = gui.model.build_dataset(X_val,y_val)
+        train_dataset = model.build_dataset(X_train, y_train, random_transformation, config["random_transformation"])
+        val_dataset = model.build_dataset(X_val,y_val)
 
-        train_loader = gui.model.build_dataloader(train_dataset, int(batch_size.get()), True)
-        val_loader = gui.model.build_dataloader(val_dataset, int(batch_size.get()), True)
+        train_loader = model.build_dataloader(train_dataset, int(batch_size.get()), True)
+        val_loader = model.build_dataloader(val_dataset, int(batch_size.get()), True)
                 
-        gui.model.train(train_loader, val_loader, num_epochs=int(num_epochs.get()))
-    
+        for _ in range(int(num_epochs.get())):
+            model.train(train_loader, val_loader, num_epochs=1)
+
+            plot_training(model.network, canvas) 
+            window.update_idletasks()
+
     else:
         for i in ["fraction", "seed"]:
             if i in dictionary:
                 del dictionary[i]
 
-        X_train, y_train = gui.model.setup_train_data(X,y,**dictionary)
+        X_train, y_train = model.setup_train_data(X,y,**dictionary)
 
-        train_dataset = gui.model.build_dataset(X_train, y_train, random_transformation, config["random_transformation"])
-        train_loader = gui.model.build_dataloader(train_dataset, int(batch_size.get()), True)
+        train_dataset = model.build_dataset(X_train, y_train, random_transformation, config["random_transformation"])
+        train_loader = model.build_dataloader(train_dataset, int(batch_size.get()), True)
 
-        gui.model.train(train_loader, num_epochs=int(num_epochs.get()))
+        for _ in range(int(num_epochs.get())):
+            model.train(train_loader, num_epochs=1)
+
+            plot_training(model.network, canvas)
+            window.update_idletasks()
 
     messagebox.showinfo("Success", "Model trained successfully.")
 

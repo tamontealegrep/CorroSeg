@@ -2,15 +2,12 @@
 import numpy as np
 import tkinter as tk
 from tkinter import Toplevel, filedialog, messagebox
-from PIL import Image, ImageTk
-
-
+from PIL import Image
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.models.manager import ModelManager
-from src.models.architectures.networks.unet import Unet
-from src.models.dataset.transformations import random_transformation
-
-from src.utils.files import load_config, dict_to_npy_file, load_arrays_from_folders, npy_file_to_dict
+from src.utils.files import load_config
 from src.utils.plots import np_array_to_pil
 
 from src.gui.utils.load import load_model
@@ -18,7 +15,7 @@ from src.gui.utils.save import save_model
 from src.gui.utils.train import train_model
 from src.gui.utils.new import loss_options_manager, make_model
 from src.gui.utils.files import load_file
-from src.gui.utils.plot import update_canvas
+from src.gui.utils.plot import update_canvas, plot_training
 from src.gui.utils.widgets import create_checkbox, create_entry, create_option_menu, create_slider
 from src.gui.utils.utils import toggle_widgets_by_bool, scrollbar_command
 
@@ -329,7 +326,7 @@ class Gui:
         window.title("Train")
 
         frame = tk.Frame(window)
-        frame.pack()
+        frame.grid(row=0, column=0, padx=10, pady=10)
 
         train_frame = tk.LabelFrame(frame, text="Options")
         train_frame.grid(row=0, column=0, padx=20, pady=10)
@@ -341,8 +338,24 @@ class Gui:
         expand, _ = create_checkbox(train_frame,4,0,"Horizontal Expansion",train_default["expand"],pady= 5)
         augmented_ratio = create_slider(train_frame,5,0,"Augmented Ratio:",0,1,train_default["augmented_ratio"],resolution=0.1,pady=5)
 
+        plot_frame = tk.Frame(window)
+        plot_frame.grid(row=0, column=1, padx=10, pady=10)
+
+        plot_sub_frame = tk.LabelFrame(plot_frame, text="Training Plot")
+        plot_sub_frame.grid(row=0, column=0, padx=20, pady=10)
+
+        fig, ax = plt.subplots(figsize=(5, 5))
+        ax.clear()
+        ax.set_axis_off() 
+
+        canvas = FigureCanvasTkAgg(fig, master=plot_sub_frame)
+        canvas.get_tk_widget().pack(padx=5, pady=5)
+
+        if len(self.model.network.results.get("train_loss", [])) > 0:
+            plot_training(self.model.network, canvas) 
+
         save_button = tk.Button(frame, text="Train model", command=lambda: train_model(
-            self, fraction, seed, expand, augmented_ratio, batch_size, num_epochs
+            self.model, fraction, seed, expand, augmented_ratio, batch_size, num_epochs, window, canvas
         ))
         save_button.grid(row=1, column=0, pady=10)
 
