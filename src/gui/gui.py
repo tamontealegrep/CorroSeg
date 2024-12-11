@@ -19,7 +19,7 @@ from src.gui.utils.save import save_model
 from src.gui.utils.train import train_model
 from src.gui.utils.new import loss_options_manager, make_model
 from src.gui.utils.predict import load_file, predict_model
-from src.gui.utils.plot import update_section
+from src.gui.utils.plot import update_canvas
 from src.gui.utils.widgets import create_checkbox, create_entry, create_option_menu, create_slider
 from src.gui.utils.utils import toggle_widgets_by_bool, scrollbar_command
 
@@ -42,6 +42,7 @@ class Gui:
         self.model:ModelManager = None
         self.file = None
         self.file_name = None
+        self.mask = None
         self.prediction = None
 
         self.root_widgets()
@@ -272,6 +273,9 @@ class Gui:
             
             if self.file_name:
                 name_label_var.set(self.file_name)
+
+            if self.prediction:
+                self.prediction = None
                 
         load_button = tk.Button(file_frame, text="Load File", command=lambda: load_file_and_update(self))
         load_button.grid(row=1,column=0, pady=5, padx=5)
@@ -337,30 +341,56 @@ class Gui:
         data_canvas.config(yscrollcommand=scrollbar.set)
         mask_canvas.config(yscrollcommand=scrollbar.set)
 
-        current_section = 0
+        section_index = 0
 
         def next_section():
-            nonlocal current_section
-            if current_section < num_sections - 1:
-                current_section += 1
-                update_section(data_img, mask_img, data_canvas, mask_canvas, section_height, current_section)
+            nonlocal section_index
+            if section_index < num_sections - 1:
+                section_index += 1
+                update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+                slider.set(section_index)
+                update_buttons()
 
         def prev_section():
-            nonlocal current_section
-            if current_section > 0:
-                current_section -= 1
-                update_section(data_img, mask_img, data_canvas, mask_canvas, section_height, current_section)
+            nonlocal section_index
+            if section_index > 0:
+                section_index -= 1
+                update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+                slider.set(section_index)
+                update_buttons()
+
+        def update_slider(value):
+            nonlocal section_index
+            section_index = int(value)
+            update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+            slider.set(section_index)
+            update_buttons()
+
+        def update_buttons():
+            if section_index == 0:
+                prev_button.config(state=tk.DISABLED)
+            else:
+                prev_button.config(state=tk.NORMAL)
+
+            if section_index == num_sections:
+                next_button.config(state=tk.DISABLED)
+            else:
+                next_button.config(state=tk.NORMAL)
 
         button_frame = tk.Frame(window)
-        button_frame.pack(fill=tk.X, padx=20, pady=20)
+        button_frame.pack(expand=True, padx=20, pady=10)
 
         prev_button = tk.Button(button_frame, text="Previous", command=prev_section)
-        prev_button.pack(side=tk.LEFT, padx=5)
+        prev_button.grid(row=0, column=0, padx=5)
+
+        slider = tk.Scale(button_frame, from_=0, to= num_sections - 1, orient="horizontal", command=update_slider)
+        slider.grid(row=0, column=1, padx=5, pady=5) 
 
         next_button = tk.Button(button_frame, text="Next", command=next_section)
-        next_button.pack(side=tk.LEFT, padx=5)
+        next_button.grid(row=0, column=2, padx=5) 
 
-        update_section(data_img, mask_img, data_canvas, mask_canvas, section_height, current_section)
+        update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index)
+        update_buttons()
 
     def save_plot(self):
         if self.prediction is None:
@@ -390,7 +420,7 @@ class Gui:
             return
         
         img_size = data_img.size # (width, height)
-        new_img_size = (img_size[0], 2 * img_size[1])
+        new_img_size = (2 * img_size[0], img_size[1])
 
         new_image = Image.new('RGB', new_img_size)
 

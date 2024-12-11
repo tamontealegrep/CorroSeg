@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def update_section(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index):
+def update_canvas(data_img, mask_img, data_canvas, mask_canvas, section_height, section_index):
     """
     Updates the visible section of the images displayed on the canvases based on the section index.
     
@@ -21,14 +21,15 @@ def update_section(data_img, mask_img, data_canvas, mask_canvas, section_height,
         
     """
     # Get the size of the image
-    scroll_region = data_img.size 
+    img_width, img_height = data_img.size 
 
     start_y = section_index * section_height
-    end_y = min((section_index + 1) * section_height, scroll_region[1])
+    end_y = min(start_y + section_height, img_height)
     
     # Crop the images to show only the visible section
-    data_img_section = data_img.crop((0, start_y, scroll_region[0], end_y))
-    mask_img_section = mask_img.crop((0, start_y, scroll_region[0], end_y))
+    data_img_section = data_img.crop((0, start_y, img_width, end_y))
+    mask_img_section = mask_img.crop((0, start_y, img_width, end_y))
+    crop_width, crop_height = data_img_section.size
 
     # Convert the cropped sections to Tkinter images
     tk_data_img_section = ImageTk.PhotoImage(data_img_section)
@@ -47,7 +48,7 @@ def update_section(data_img, mask_img, data_canvas, mask_canvas, section_height,
     mask_canvas.image = tk_mask_img_section
 
     # Update the scroll region of the canvases
-    data_canvas.config(scrollregion=(0, start_y, scroll_region[0], end_y))
-    mask_canvas.config(scrollregion=(0, start_y, scroll_region[0], end_y))
+    data_canvas.config(scrollregion=(0, 0, crop_width, crop_height))
+    mask_canvas.config(scrollregion=(0, 0, crop_width, crop_height))
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
