@@ -1,6 +1,7 @@
 
 import platform
-
+from typing import Tuple, List
+import torch
 import numpy as np
 import tkinter as tk
 from tkinter import Toplevel, filedialog, messagebox
@@ -11,6 +12,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from src.models.manager import ModelManager
 from src.utils.files import load_config
 from src.utils.plots import np_array_to_pil
+from src.models.metrics import accuracy_index, f1_score_index, negative_f1_score_index, dice_index, iou_index, mcc_index, precision_index, negative_precision_index, recall_index, negative_recall_index
 
 from src.gui.utils.load import load_model
 from src.gui.utils.save import save_model
@@ -41,12 +43,24 @@ class Gui:
         self.X: np.ndarray = None
         self.y: np.ndarray = None
         self.y_pred: np.ndarray = None
+        self.evaluation: Tuple[np.ndarray, List[float], float] = None
         self.well_name: str = None
         self.mask_name: str = None
         self.data_cmap: tk.StringVar = None
         self.mask_cmap: tk.StringVar = None
         self.canvas_height: tk.StringVar = None
         self.canvas_width : tk.StringVar = None
+
+        self.metric_accuracy = None
+        self.metric_dice = None
+        self.metric_f1_score = None
+        self.metric_neg_f1_score = None
+        self.metric_iou = None
+        self.metric_mcc = None
+        self.metric_precision = None
+        self.metric_neg_precision = None
+        self.metric_recall = None
+        self.metric_neg_recall = None
 
         self.root_widgets()
 
@@ -57,6 +71,7 @@ class Gui:
         frame = tk.Frame(self.root)
         frame.pack()
 
+        # Model
         model_frame = tk.LabelFrame(frame, text="Model")
         model_frame.grid(row=0, column=0, padx=20, pady=10)
 
@@ -69,6 +84,7 @@ class Gui:
         self.save_model_button = tk.Button(model_frame, text="Save Model", command=self.model_save)
         self.save_model_button.grid(row=0,column=2,padx=5, pady=10)
 
+        # Files
         files_frame = tk.LabelFrame(frame, text="Files")
         files_frame.grid(row=1, column=0, padx=20, pady=10)
 
@@ -84,6 +100,7 @@ class Gui:
         self.load_mask_button = tk.Button(files_frame, text="Load Mask", command=self.load_y)
         self.load_mask_button.grid(row=1,column=1,padx=5, pady=10)
 
+        # Operations
         operations_frame = tk.LabelFrame(frame, text="Operations")
         operations_frame.grid(row=2, column=0, padx=20, pady=10)
 
@@ -93,44 +110,100 @@ class Gui:
         self.predict_button = tk.Button(operations_frame, text="Predict", command=self.model_predict)
         self.predict_button.grid(row=0,column=1,padx=5, pady=10)
 
+        # Metrics
+        metrics_frame = tk.LabelFrame(frame, text="Metrics")
+        metrics_frame.grid(row=3, column=0, padx=20, pady=10)
+
+        general_metrics_frame = tk.LabelFrame(metrics_frame, text="General")
+        general_metrics_frame.grid(row=0, column=0, padx=20, pady=10)
+
+        self.accuracy_label = tk.Label(general_metrics_frame, text="Accuracy: None")
+        self.accuracy_label.grid(row=0, column=0, padx=5, pady=5)
+
+        self.mcc_label = tk.Label(general_metrics_frame, text="MCC: None")
+        self.mcc_label.grid(row=1, column=0, padx=5, pady=5)
+
+        overlap_metrics_frame = tk.LabelFrame(metrics_frame, text="Overlap")
+        overlap_metrics_frame.grid(row=1, column=0, padx=20, pady=10)
+
+        self.iou_label = tk.Label(overlap_metrics_frame, text="IoU: None")
+        self.iou_label.grid(row=0, column=0, padx=5, pady=5)
+
+        self.dice_label = tk.Label(overlap_metrics_frame, text="DICE: None")
+        self.dice_label.grid(row=1, column=0, padx=5, pady=5)
+
+        classification_metrics_frame = tk.LabelFrame(metrics_frame, text="Classification")
+        classification_metrics_frame.grid(row=0, column=1, rowspan=2, padx=20, pady=10)
+
+        self.precision_label = tk.Label(classification_metrics_frame, text="Precision: None")
+        self.precision_label.grid(row=0, column=0, padx=5, pady=5)
+
+        self.neg_precision_label = tk.Label(classification_metrics_frame, text="Precision Neg: None")
+        self.neg_precision_label.grid(row=1, column=0, padx=5, pady=5)
+
+        self.recall_label = tk.Label(classification_metrics_frame, text="Recall: None")
+        self.recall_label.grid(row=2, column=0, padx=5, pady=5)
+
+        self.neg_recall_label = tk.Label(classification_metrics_frame, text="Recall Neg: None")
+        self.neg_recall_label.grid(row=3, column=0, padx=5, pady=5)
+
+        self.f1_label = tk.Label(classification_metrics_frame, text="F1: None")
+        self.f1_label.grid(row=4, column=0, padx=5, pady=5)
+
+        self.neg_f1_label = tk.Label(classification_metrics_frame, text="F1 Neg: None")
+        self.neg_f1_label.grid(row=5, column=0, padx=5, pady=5)
+
+        self.update_metrics_button = tk.Button(metrics_frame, text="Update", command=self.update_metrics)
+        self.update_metrics_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+        # Plots
         plot_frame = tk.LabelFrame(frame, text="Plot")
-        plot_frame.grid(row=3, column=0, padx=20, pady=10)
+        plot_frame.grid(row=4, column=0, padx=20, pady=10)
+
+        # (SUB) Colormaps
+        cmaps_frame = tk.LabelFrame(plot_frame, text="Colormaps")
+        cmaps_frame.grid(row=0, column=0, padx=5, pady=5)
 
         self.data_cmap = tk.StringVar(value="seismic")
         self.mask_cmap = tk.StringVar(value="viridis") 
 
-        data_cmap_label = tk.Label(plot_frame, text="Data Colormap:")
-        data_cmap_label.grid(row=0, column=0, padx=5, pady=0)
+        data_cmap_label = tk.Label(cmaps_frame, text="Data:")
+        data_cmap_label.grid(row=0, column=0, padx=5, pady=5)
 
-        self.data_cmap_menu = tk.OptionMenu(plot_frame, self.data_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
-        self.data_cmap_menu.grid(row=0, column=1, padx=5, pady=0)
+        self.data_cmap_menu = tk.OptionMenu(cmaps_frame, self.data_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
+        self.data_cmap_menu.grid(row=0, column=1, padx=5, pady=5)
 
-        mask_cmap_label = tk.Label(plot_frame, text="Mask Colormap:")
+        mask_cmap_label = tk.Label(cmaps_frame, text="Mask:")
         mask_cmap_label.grid(row=1, column=0, padx=5, pady=5)
 
-        self.mask_cmap_menu = tk.OptionMenu(plot_frame, self.mask_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
-        self.mask_cmap_menu.grid(row=1, column=1, padx=5, pady=10)
+        self.mask_cmap_menu = tk.OptionMenu(cmaps_frame, self.mask_cmap, *["seismic", "gray", "viridis", "plasma", "inferno", "magma", "cividis"])
+        self.mask_cmap_menu.grid(row=1, column=1, padx=5, pady=5)
 
-        self.canvas_height = tk.StringVar(value="500")
+        # (SUB) Dimensions
+        dimensions_frame = tk.LabelFrame(plot_frame, text="Canvas Size")
+        dimensions_frame.grid(row=1, column=0, padx=10, pady=10)
+
+        self.canvas_height = tk.StringVar(value="800")
         self.canvas_width = tk.StringVar(value="72")
 
-        self.height_label = tk.Label(plot_frame, text="Height:")
-        self.height_label.grid(row=2, column=0, padx=5, pady=5)
+        self.height_label = tk.Label(dimensions_frame, text="Height:")
+        self.height_label.grid(row=0, column=0, padx=5, pady=5)
 
-        self.height_entry = tk.Entry(plot_frame, textvariable=self.canvas_height, width=5)
-        self.height_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.height_entry = tk.Entry(dimensions_frame, textvariable=self.canvas_height, width=5)
+        self.height_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        self.width_label = tk.Label(plot_frame, text="Width:")
-        self.width_label.grid(row=2, column=2, padx=5, pady=5)
+        self.width_label = tk.Label(dimensions_frame, text="Width:")
+        self.width_label.grid(row=0, column=2, padx=5, pady=5)
 
-        self.width_entry = tk.Entry(plot_frame, textvariable=self.canvas_width, width=5)
-        self.width_entry.grid(row=2, column=3, padx=5, pady=5)
+        self.width_entry = tk.Entry(dimensions_frame, textvariable=self.canvas_width, width=5)
+        self.width_entry.grid(row=0, column=3, padx=5, pady=5)
 
         self.plot_button = tk.Button(plot_frame, text="Plot", command=self.plot)
-        self.plot_button.grid(row=0,column=2, rowspan=3, padx=10, pady=10)
+        self.plot_button.grid(row=0,column=4, rowspan=3, padx=10, pady=10)
 
+        # Predict
         predict_frame = tk.LabelFrame(frame, text="Prediction")
-        predict_frame.grid(row=4, column=0, padx=20, pady=10)
+        predict_frame.grid(row=5, column=0, padx=20, pady=10)
 
         predict_subframe_up = tk.Frame(predict_frame)
         predict_subframe_up.pack()
@@ -171,30 +244,35 @@ class Gui:
             self.data_cmap_menu.config(state=tk.DISABLED)
             self.mask_cmap_menu.config(state=tk.DISABLED)
             self.height_entry.config(state=tk.DISABLED)
-            self.mask_cmap_menu.config(state=tk.DISABLED)
+            self.width_entry.config(state=tk.DISABLED)
         else:
             self.load_mask_button.config(state=tk.NORMAL)
             self.plot_button.config(state=tk.NORMAL)
             self.data_cmap_menu.config(state=tk.NORMAL)
             self.mask_cmap_menu.config(state=tk.NORMAL)
-            self.mask_cmap_menu.config(state=tk.NORMAL)
             self.height_entry.config(state=tk.NORMAL)
+            self.width_entry.config(state=tk.NORMAL)
 
         if self.model is None or self.X is None:
             self.predict_button.config(state=tk.DISABLED)
         else:
             self.predict_button.config(state=tk.NORMAL)
 
+        if self.y is None or self.y_pred is None:
+            self.update_metrics_button.config(state=tk.DISABLED)
+        else:
+            self.update_metrics_button.config(state=tk.NORMAL)
+
         if self.y_pred is None:
             self.save_plot_button.config(state=tk.DISABLED)
             self.save_csv_button.config(state=tk.DISABLED)
             self.save_npy_button.config(state=tk.DISABLED)
-            self.width_entry.config(state=tk.DISABLED)
+            self.save_cmap_menu.config(state=tk.DISABLED)
         else:
             self.save_plot_button.config(state=tk.NORMAL)
             self.save_csv_button.config(state=tk.NORMAL)
             self.save_npy_button.config(state=tk.NORMAL)
-            self.width_entry.config(state=tk.NORMAL)
+            self.save_cmap_menu.config(state=tk.NORMAL)
 
     def test_function(self):
         print("OK")
@@ -422,12 +500,27 @@ class Gui:
         self.y = None
         self.mask_name = None
         self.y_pred = None
+        self.evaluation = None
 
         self.file_label.config(text=str(X_name))
         self.mask_label.config(text=str("None"))
 
+        self.accuracy_label.config(text="Accuracy: None")
+        self.mcc_label.config(text="MCC: None")
+
+        self.iou_label.config(text="IoU: None")
+        self.dice_label.config(text="DICE: None")
+
+        self.precision_label.config(text="Precision: None")
+        self.neg_precision_label.config(text="Precision Neg: None")
+        self.recall_label.config(text="Recall: None")
+        self.neg_recall_label.config(text="Recall Neg: None")
+        self.f1_label.config(text="F1: None")
+        self.neg_f1_label.config(text="F1 Neg: None")
+
         self.update_root_widgets()
 
+        
     def load_y(self):
         y, y_name = load_file()
 
@@ -451,7 +544,6 @@ class Gui:
         self.update_root_widgets()
 
     def plot(self):
-        #canvas_height, canvas_width = (500, 72)
         canvas_height = int(self.canvas_height.get())
         canvas_width = int(self.canvas_width.get())
         section_height = 10000
@@ -626,6 +718,69 @@ class Gui:
         update_canvas(images, canvases, section_height, section_index)
         update_buttons()
 
+    def model_evaluate(self):
+        window = tk.Toplevel(self.root)
+        window.title("Evaluate")
+
+        frame = tk.Frame(window)
+        frame.grid(row=0, column=0, padx=10, pady=10)
+
+        eval_frame = tk.LabelFrame(frame, text="Options")
+        eval_frame.grid(row=0, column=0, padx=20, pady=10)
+
+        metric_name, metric_name_menu = create_option_menu(eval_frame,0,0,"Metric: ",["DICE","IoU"],"IoU",padx=5, pady=10)
+
+        result_label = tk.Label(frame, text="Result: N/A")
+        result_label.grid(row=1, column=0, padx=10, pady=10)
+
+        evaluate_button = tk.Button(frame, text="Evaluate", command=lambda: self.evaluate(metric_name.get(), result_label))
+        evaluate_button.grid(row=2, column=0, padx=10, pady=10)
+
+    def evaluate(self, metric_name, label):
+        outputs = torch.from_numpy(self.y_pred)
+        targets = torch.from_numpy(self.y)
+
+        if metric_name == "IoU":
+            metric = iou_index
+        elif metric_name == "DICE":
+            metric = dice_index
+        else:
+            raise ValueError()
+
+        result = metric(outputs, targets)
+
+        label.config(text=f"Result: {result:.3f}")
+
+    def update_metrics(self):
+        outputs = torch.from_numpy(self.y_pred)
+        targets = torch.from_numpy(self.y)
+
+        accuracy_value = accuracy_index(outputs, targets)
+        mcc_value = mcc_index(outputs, targets)
+
+        iou_value = iou_index(outputs, targets)
+        dice_value = dice_index(outputs, targets)
+
+        precision_value = precision_index(outputs, targets)
+        neg_precision_value = negative_precision_index(outputs, targets)
+        recall_value = recall_index(outputs, targets)
+        neg_recall_value = negative_recall_index(outputs, targets)
+        f1_value = f1_score_index(outputs, targets)
+        neg_f1_value = negative_f1_score_index(outputs, targets)
+
+        self.accuracy_label.config(text=f"Accuracy: {accuracy_value:.3f}")
+        self.mcc_label.config(text=f"MCC: {mcc_value:.3f}")
+
+        self.iou_label.config(text=f"IoU: {iou_value:.3f}")
+        self.dice_label.config(text=f"DICE: {dice_value:.3f}")
+
+        self.precision_label.config(text=f"Precision: {precision_value:.3f}")
+        self.neg_precision_label.config(text=f"Precision Neg: {neg_precision_value:.3f}")
+        self.recall_label.config(text=f"Recall: {recall_value:.3f}")
+        self.neg_recall_label.config(text=f"Recall Neg: {neg_recall_value:.3f}")
+        self.f1_label.config(text=f"F1: {f1_value:.3f}")
+        self.neg_f1_label.config(text=f"F1 Neg: {neg_f1_value:.3f}")
+        
     def save_csv(self):
         if self.y_pred is None:
             messagebox.showwarning("Error", "There is no prediction to save.")
