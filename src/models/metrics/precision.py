@@ -1,9 +1,13 @@
 import torch
 import torch.nn as nn
+from typing import Optional
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-def precision_index(outputs: torch.Tensor, targets: torch.Tensor) -> float:
+def precision_index(outputs: torch.Tensor,
+                    targets: torch.Tensor,
+                    smooth: Optional[float] = 1e-6,
+                    ) -> float:
     """
     Calculate the precision of the model, i.e., the proportion of true positive predictions 
     among all predicted positives.
@@ -14,16 +18,20 @@ def precision_index(outputs: torch.Tensor, targets: torch.Tensor) -> float:
     Parameters:
         outputs (torch.Tensor): Predicted outputs, shape (N,).
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
+        smooth (float, optional): Small constant to avoid division by zero.
 
     Returns:
         (float): Precision value.
     """
-    TP = (outputs * targets).sum().item()
-    FP = ((1 - targets) * outputs).sum().item()
-    return TP / (TP + FP) if TP + FP > 0 else 0
+    TP = (outputs * targets).sum()
+    FP = ((1 - targets) * outputs).sum()
+    return TP / (TP + FP + smooth)
 
 
-def negative_precision_index(outputs: torch.Tensor, targets: torch.Tensor) -> float:
+def negative_precision_index(outputs: torch.Tensor,
+                             targets: torch.Tensor,
+                             smooth: Optional[float] = 1e-6,
+                             ) -> float:
     """
     Calculate the negative precision, i.e., the proportion of true negatives 
     among all predicted negatives.
@@ -34,12 +42,13 @@ def negative_precision_index(outputs: torch.Tensor, targets: torch.Tensor) -> fl
     Parameters:
         outputs (torch.Tensor): Predicted outputs, shape (N,).
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
+        smooth (float, optional): Small constant to avoid division by zero.
 
     Returns:
         (float): Negative precision value.
     """
-    TN = ((1 - outputs) * (1 - targets)).sum().item()
-    FN = ((1 - outputs) * targets).sum().item()
-    return TN / (TN + FN) if TN + FN > 0 else 0
+    TN = ((1 - outputs) * (1 - targets)).sum()
+    FN = ((1 - outputs) * targets).sum()
+    return TN / (TN + FN + smooth) 
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------

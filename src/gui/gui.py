@@ -377,16 +377,20 @@ class Gui:
 
         loss_class, loss_class_menu = create_option_menu(
             loss_frame,0,0,"Function:",
-            ["DICELoss","FocalLoss", "IoULoss", "IoUFocalLoss", "TverskyLoss"],
+            ["DICELoss","DICEFocalLoss","FocalLoss", "IoULoss", "IoUFocalLoss",
+             "MCCLoss", "MCCFocalLoss", "TverskyLoss", "TverskyFocalLoss"],
             manager_default["loss_class"],
+            width=15,
             padx=5,
             pady=5
             )
+        
         alpha = create_entry(loss_frame,1,0,"Alpha: ","0.5", pady=5)
         beta = create_entry(loss_frame,2,0,"Beta: ","0.5", pady=5)
         gamma = create_entry(loss_frame,3,0,"Gamma: ","2", pady=5)
-        base_weight = create_entry(loss_frame,4,0,"Base weight: ","1", pady=5)
-        focal_weight = create_entry(loss_frame,5,0,"Focal weight: ","10", pady=5)
+        delta = create_entry(loss_frame,4,0,"Delta: ","0.5", pady=5)
+        base_weight = create_entry(loss_frame,5,0,"Base weight: ","1", pady=5)
+        focal_weight = create_entry(loss_frame,6,0,"Focal weight: ","10", pady=5)
         
         optim_frame = tk.LabelFrame(parameters_frame, text="Optimizer")
         optim_frame.grid(row=1, column=0, padx=5, pady=5)
@@ -394,7 +398,7 @@ class Gui:
         learning_rate = create_entry(optim_frame,0,0,"Learning rate: ",str(manager_default["optimizer_params"]["lr"]),pady=5)
         weight_decay = create_entry(optim_frame,1,0,"Weight decay: ",str(manager_default["optimizer_params"]["weight_decay"]),width=7,padx=5,pady=5)
 
-        loss_class.trace("w", lambda *args: loss_options_manager(loss_class, alpha, beta, gamma, base_weight, focal_weight))
+        loss_class.trace("w", lambda *args: loss_options_manager(loss_class, alpha, beta, gamma, delta, base_weight, focal_weight))
 
         def new_model_confirmation():
             answer = messagebox.askyesno("Confirmation", "Are you sure?")
@@ -411,7 +415,7 @@ class Gui:
                     d_activation, d_dropout_prob, d_cbam, d_cbam_reduction, d_cbam_activation,
                     s_activation, s_dropout_prob, s_cbam, s_cbam_reduction, s_cbam_activation,
                     attention_gates, output_activation,
-                    loss_class, alpha, beta, gamma, base_weight, focal_weight, learning_rate, weight_decay)
+                    loss_class, alpha, beta, gamma, delta, base_weight, focal_weight, learning_rate, weight_decay)
                 window.destroy()
                 self.update_root_widgets()
             else:
@@ -420,7 +424,7 @@ class Gui:
         save_button = tk.Button(frame, text="Make model", command=new_model_confirmation)
         save_button.grid(row=1, columnspan=3, pady=10)
 
-        loss_options_manager(loss_class, alpha, beta, gamma, base_weight, focal_weight)
+        loss_options_manager(loss_class, alpha, beta, gamma, delta, base_weight, focal_weight)
 
     def model_train(self):
         window = tk.Toplevel(self.root)
@@ -698,7 +702,7 @@ class Gui:
             else:
                 prev_button.config(state=tk.NORMAL)
 
-            if section_index == num_sections:
+            if section_index == num_sections - 1:
                 next_button.config(state=tk.DISABLED)
             else:
                 next_button.config(state=tk.NORMAL)

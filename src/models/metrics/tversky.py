@@ -25,10 +25,10 @@ def tversky_index(outputs: torch.Tensor,
         (float): Tversky index value.
     """
     intersection = (outputs * targets).sum()
-    false_positive = ((1 - targets) * outputs).sum()
-    false_negative = (targets * (1 - outputs)).sum()
+    FP = ((1 - targets) * outputs).sum()
+    FN = (targets * (1 - outputs)).sum()
 
-    return (intersection + smooth) / (intersection + alpha * false_positive + beta * false_negative + smooth)
+    return (intersection + smooth) / (intersection + alpha * FP + beta * FN + smooth)
 
 class TverskyLoss(nn.Module):
     """

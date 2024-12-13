@@ -17,7 +17,7 @@ def accuracy_index(outputs: torch.Tensor, targets: torch.Tensor) -> float:
     Returns:
         (float): Accuracy value.
     """
-    correct = (outputs == targets).sum().item()
+    correct = (outputs == targets).sum()
     total = targets.numel()
     return correct / total
 

@@ -17,8 +17,12 @@ def dice_index(outputs: torch.Tensor,
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
         smooth (float, optional): Small constant to avoid division by zero.
 
+    Intuition: The DICE index measures the overlap between the predicted positive region and the actual 
+               ground truth positive region. It quantifies how well the model's predictions match the true positives. 
+               A DICE index close to 1 indicates a high degree of overlap, while a value close to 0 suggests poor performance.
+
     Returns:
-        float: DICE index value.
+        (float): DICE index value.
     """
     intersection = (outputs * targets).sum()
     return (2. * intersection + smooth) / (outputs.sum() + targets.sum() + smooth)

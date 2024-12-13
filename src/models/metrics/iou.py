@@ -16,7 +16,12 @@ def iou_index(outputs: torch.Tensor,
         outputs (torch.Tensor): Predicted outputs after applying sigmoid, shape (N,).
         targets (torch.Tensor): Ground truth binary targets, shape (N,).
         smooth (float, optional): Small constant to avoid division by zero.
-
+    
+    Intuition: IoU measures how much the predicted positive are overlaps with the actual 
+               ground truth positive area. It compares the intersection (the area both predicted and actual share) 
+               to the union (the total area covered by either prediction or ground truth). 
+               A IoU index close to 1 indicates a high degree of overlap, while a value close to 0 suggests poor performance.
+    
     Returns:
         (float): IoU index value.
     """

@@ -19,6 +19,7 @@ def loss_options_manager(
         alpha: tk.Entry,
         beta: tk.Entry,
         gamma: tk.Entry,
+        delta: tk.Entry,
         base_weight: tk.Entry,
         focal_weight: tk.Entry,
         ) -> None:
@@ -31,6 +32,7 @@ def loss_options_manager(
         alpha (tk.Entry): Entry widget for the alpha parameter in certain loss functions.
         beta (tk.Entry): Entry widget for the beta parameter in certain loss functions.
         gamma (tk.Entry): Entry widget for the gamma parameter in certain loss functions.
+        delta (tk.Entry): Entry widget for the gamma parameter in certain loss functions.
         base_weight (tk.Entry): Entry widget for the base weight parameter in certain loss functions.
         focal_weight (tk.Entry): Entry widget for the focal weight parameter in certain loss functions.
     
@@ -38,22 +40,34 @@ def loss_options_manager(
         - Depending on the selected loss function, different entry fields (widgets) are enabled or disabled.
         - The loss function options and their corresponding widgets:
             - "DICELoss": Disables all widgets.
-            - "FocalLoss": Enables alpha and gamma, disables others.
+            - "DICEFocalLoss": Enables gamma, delta, base_weight, and focal_weight, disables alpha, beta.
+            - "FocalLoss": Enables gamma and delta, disables others.
             - "IoULoss": Disables all widgets.
-            - "IoUFocalLoss": Enables alpha, gamma, base_weight, and focal_weight, disables beta.
+            - "IoUFocalLoss": Enables gamma, delta, base_weight, and focal_weight, disables alpha, beta.
+            - "MCCLoss": Disables all widgets.
+            - "MCCFocalLoss": Enables gamma, delta, base_weight, and focal_weight, disables alpha, beta.
             - "TverskyLoss": Enables alpha and beta, disables others.
+            - "TverskyFocalLoss": Enables all widgets.
     """
     state = loss_class.get()
     if state == "DICELoss":
-        toggle_multiple_widgets([],[alpha, beta, gamma, base_weight, focal_weight])
+        toggle_multiple_widgets([],[alpha, beta, gamma, delta, base_weight, focal_weight])
+    elif state == "DICEFocalLoss":
+        toggle_multiple_widgets([gamma, delta, base_weight, focal_weight],[alpha, beta])
     elif state == "FocalLoss":
-        toggle_multiple_widgets([alpha, gamma],[beta, base_weight, focal_weight])
+        toggle_multiple_widgets([gamma, delta],[alpha, beta, base_weight, focal_weight])
     elif state == "IoULoss":
-        toggle_multiple_widgets([],[alpha, beta, gamma, base_weight, focal_weight])
+        toggle_multiple_widgets([],[alpha, beta, gamma, delta, base_weight, focal_weight])
     elif state == "IoUFocalLoss":
-        toggle_multiple_widgets([alpha, gamma, base_weight, focal_weight],[beta])
+        toggle_multiple_widgets([gamma, delta, base_weight, focal_weight],[alpha, beta])
+    elif state == "MCCLoss":
+        toggle_multiple_widgets([],[alpha, beta, gamma, delta, base_weight, focal_weight])
+    elif state == "MCCFocalLoss":
+        toggle_multiple_widgets([gamma, delta, base_weight, focal_weight],[alpha, beta])
     elif state == "TverskyLoss":
-        toggle_multiple_widgets([alpha, beta],[gamma, base_weight, focal_weight])
+        toggle_multiple_widgets([alpha, beta],[gamma, delta, base_weight, focal_weight])
+    elif state == "TverskyFocalLoss":
+        toggle_multiple_widgets([alpha, beta, gamma, delta, base_weight, focal_weight],[])
 
 def get_block_type(num_recurrences: int, residual: bool, state: bool = True) -> str:
     """
@@ -243,6 +257,7 @@ def get_manager_dictionary(
     alpha: tk.StringVar,
     beta: tk.StringVar,
     gamma: tk.StringVar,
+    delta: tk.StringVar,
     base_weight: tk.StringVar,
     focal_weight: tk.StringVar,
     learning_rate: tk.StringVar,
@@ -260,6 +275,7 @@ def get_manager_dictionary(
         alpha (tk.StringVar): Tkinter variable for the alpha parameter in the loss function.
         beta (tk.StringVar): Tkinter variable for the beta parameter in the loss function.
         gamma (tk.StringVar): Tkinter variable for the gamma parameter in the loss function.
+        delta (tk.StringVar): Tkinter variable for the gamma parameter in the loss function.
         base_weight (tk.StringVar): Tkinter variable for the base weight parameter in the loss function.
         focal_weight (tk.StringVar): Tkinter variable for the focal weight parameter in the loss function.
         learning_rate (tk.StringVar): Tkinter variable for the learning rate parameter in the optimizer.
@@ -281,6 +297,7 @@ def get_manager_dictionary(
             "alpha": float(alpha.get()),
             "beta": float(beta.get()),
             "gamma": float(gamma.get()),
+            "delta": float(delta.get()),
             "base_weight": float(base_weight.get()),
             "focal_weight": float(focal_weight.get()),
         },
@@ -291,28 +308,41 @@ def get_manager_dictionary(
         "scaler_params": manager_default["scaler_params"],
     }
 
-    if dictionary["loss_class"] in ["DICELoss", "IoULoss"]:
+    if dictionary["loss_class"] in ["DICELoss", "IoULoss", "MCCLoss"]:
         dictionary["loss_params"] = {}
 
-    if dictionary["loss_class"] == "FocalLoss":
-        for i in ["beta", "base_weight", "focal_weight"]:
+    if dictionary["loss_class"] in ["FocalLoss"]:
+        for i in ["alpha", "beta", "base_weight", "focal_weight"]:
             if i in dictionary["loss_params"]:
                 del dictionary["loss_params"][i]
 
-    if dictionary["loss_class"] == "IoUFocalLoss":
-        if "beta" in dictionary["loss_params"]:
-            del dictionary["loss_params"]["beta"]
-        if "base_weight" in dictionary["loss_params"]:
+    if dictionary["loss_class"] in ["DICEFocalLoss", "IoUFocalLoss", "MCCFocalLoss"]:
+        for i in ["alpha", "beta"]:
+            if i in dictionary["loss_params"]:
+                del dictionary["loss_params"][i]
+    
+    if dictionary["loss_class"] in ["TverskyLoss"]:
+        for i in ["gamma", "delta","base_weight", "focal_weight"]:
+            if i in dictionary["loss_params"]:
+                del dictionary["loss_params"][i]
+
+    if dictionary["loss_class"] in ["TverskyFocalLoss"]:
+        pass
+
+    if dictionary["loss_class"] in ["DICEFocalLoss", "IoUFocalLoss", "MCCFocalLoss", "TverskyFocalLoss"]:
+        if "base_weight" in dictionary["loss_params"] and dictionary["loss_class"] == "DICEFocalLoss":
+            dictionary["loss_params"]["dice_weight"] = dictionary["loss_params"].pop("base_weight")
+        elif "base_weight" in dictionary["loss_params"] and dictionary["loss_class"] == "IoUFocalLoss":
             dictionary["loss_params"]["iou_weight"] = dictionary["loss_params"].pop("base_weight")
-
-    if dictionary["loss_class"] == "TverskyLoss":
-        for i in ["gamma", "base_weight", "focal_weight"]:
-            if i in dictionary["loss_params"]:
-                del dictionary["loss_params"][i]
+        elif "base_weight" in dictionary["loss_params"] and dictionary["loss_class"] == "MCCFocalLoss":
+            dictionary["loss_params"]["mcc_weight"] = dictionary["loss_params"].pop("base_weight")
+        elif "base_weight" in dictionary["loss_params"] and dictionary["loss_class"] == "TverskyFocalLoss":
+            dictionary["loss_params"]["tversky_weight"] = dictionary["loss_params"].pop("base_weight")
 
     return dictionary
 
-def make_model(input_channels: tk.IntVar,
+def make_model(
+    input_channels: tk.IntVar,
     output_channels: tk.IntVar,
     base_channels: tk.IntVar,
     num_layers: tk.IntVar,
@@ -351,6 +381,7 @@ def make_model(input_channels: tk.IntVar,
     alpha: tk.StringVar,
     beta: tk.StringVar,
     gamma: tk.StringVar,
+    delta: tk.StringVar,
     base_weight: tk.StringVar,
     focal_weight: tk.StringVar,
     learning_rate: tk.StringVar,
@@ -373,7 +404,7 @@ def make_model(input_channels: tk.IntVar,
     )
 
     manager_dict = get_manager_dictionary(
-    loss_class, alpha, beta, gamma, base_weight, focal_weight, learning_rate, weight_decay
+    loss_class, alpha, beta, delta, gamma, base_weight, focal_weight, learning_rate, weight_decay
     )
 
     network = Unet.from_dict(network_dict)
