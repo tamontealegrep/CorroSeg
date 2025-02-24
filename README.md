@@ -117,6 +117,8 @@ _Example of prediction results displayed on test data._
 - Required dependencies:
   - Tkinter (for the GUI)
   - NumPy
+  - Pandas
+  - Scipy
   - Matplotlib
   - OpenCV
   - Pillow (for image processing)
