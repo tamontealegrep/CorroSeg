@@ -387,7 +387,61 @@ def make_model(
     learning_rate: tk.StringVar,
     weight_decay: tk.StringVar):
     """
-    Makes the model
+    Creates and returns a model based on the provided configuration parameters.
+
+    This function combines the configurations for the network structure, loss functions, 
+    and optimizer settings to build a model. The network configuration is determined by 
+    the specified block types, activations, and other parameters, while the loss function 
+    and optimizer are set based on the provided loss class and hyperparameters.
+
+    Parameters:
+        input_channels (tk.IntVar): The number of input channels for the model.
+        output_channels (tk.IntVar): The number of output channels for the model.
+        base_channels (tk.IntVar): The number of base channels in the model.
+        num_layers (tk.IntVar): The number of layers in the model.
+        e_num_recurrences (tk.IntVar): The number of recurrences in the encoder block.
+        e_residual (tk.BooleanVar): Whether the encoder block includes a residual connection.
+        b_num_recurrences (tk.IntVar): The number of recurrences in the bottleneck block.
+        b_residual (tk.BooleanVar): Whether the bottleneck block includes a residual connection.
+        d_num_recurrences (tk.IntVar): The number of recurrences in the decoder block.
+        d_residual (tk.BooleanVar): Whether the decoder block includes a residual connection.
+        s_num_recurrences (tk.IntVar): The number of recurrences in the skip connections block.
+        s_residual (tk.BooleanVar): Whether the skip connections block includes a residual connection.
+        skip_connections (tk.BooleanVar): Whether skip connections are used in the network.
+        e_activation (tk.StringVar): The activation function for the encoder block.
+        e_dropout_prob (tk.StringVar): The dropout probability for the encoder block.
+        e_cbam (tk.BooleanVar): Whether CBAM is applied to the encoder block.
+        e_cbam_reduction (tk.IntVar): The reduction factor for CBAM in the encoder block.
+        e_cbam_activation (tk.StringVar): The activation function for CBAM in the encoder block.
+        b_activation (tk.StringVar): The activation function for the bottleneck block.
+        b_dropout_prob (tk.StringVar): The dropout probability for the bottleneck block.
+        b_cbam (tk.BooleanVar): Whether CBAM is applied to the bottleneck block.
+        b_cbam_reduction (tk.IntVar): The reduction factor for CBAM in the bottleneck block.
+        b_cbam_activation (tk.StringVar): The activation function for CBAM in the bottleneck block.
+        d_activation (tk.StringVar): The activation function for the decoder block.
+        d_dropout_prob (tk.StringVar): The dropout probability for the decoder block.
+        d_cbam (tk.BooleanVar): Whether CBAM is applied to the decoder block.
+        d_cbam_reduction (tk.IntVar): The reduction factor for CBAM in the decoder block.
+        d_cbam_activation (tk.StringVar): The activation function for CBAM in the decoder block.
+        s_activation (tk.StringVar): The activation function for the skip connections block.
+        s_dropout_prob (tk.StringVar): The dropout probability for the skip connections block.
+        s_cbam (tk.BooleanVar): Whether CBAM is applied to the skip connections block.
+        s_cbam_reduction (tk.IntVar): The reduction factor for CBAM in the skip connections block.
+        s_cbam_activation (tk.StringVar): The activation function for CBAM in the skip connections block.
+        attention_gates (tk.BooleanVar): Whether attention gates are used in the network.
+        output_activation (tk.StringVar): The activation function for the output layer.
+        loss_class (tk.StringVar): The selected loss function class (e.g., 'DICELoss', 'FocalLoss').
+        alpha (tk.StringVar): The alpha parameter for the loss function.
+        beta (tk.StringVar): The beta parameter for the loss function.
+        gamma (tk.StringVar): The gamma parameter for the loss function.
+        delta (tk.StringVar): The delta parameter for the loss function.
+        base_weight (tk.StringVar): The base weight parameter for the loss function.
+        focal_weight (tk.StringVar): The focal weight parameter for the loss function.
+        learning_rate (tk.StringVar): The learning rate for the optimizer.
+        weight_decay (tk.StringVar): The weight decay for the optimizer.
+
+    Returns:
+        model (ModelManager): The built model based on the provided configuration.
     """
     network_dict = get_network_dictionary(
     input_channels, output_channels, base_channels, num_layers,
