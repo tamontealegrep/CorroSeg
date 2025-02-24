@@ -88,22 +88,41 @@ _Visualization of the training process with graphs showing the loss over epochs.
 _Example of prediction results displayed on test data._
 </div>
 
+## **Project Organization**
+
+
+    ├── LICENSE
+    ├── README.md                   <- This document outlines the project workflow project.
+    ├── main.py                     <- Main proyect file.
+    ├── requirements.txt            <- The requirements file.
+    ├── data
+    │   └── train
+    │       ├── X                   <- Well data in .npy format.
+    │       └── y                   <- Mask data in .npy format.
+    ├── images                      <- Contains the images for README.md. 
+    └── src                         <- Contains the all source code files.
+        ├── config                  <- Configuration files in .yaml format.
+        ├── data                    <- Code related to preprocess of the data.
+        ├── gui                     <- Code related to Graphical User Interface (GUI).
+        ├── models                  <- Code related to build and train models.
+        └── utils                   <- General functions. 
+
+--------
+
 ## **How to Run the Project**
 
 ### **Prerequisites**
-- Python 3.x
+- Python >= 3.12
 - PyTorch (with CUDA support for GPU usage)
 - Required dependencies:
   - Tkinter (for the GUI)
   - NumPy
   - Matplotlib
-  - scikit-learn
   - OpenCV
   - Pillow (for image processing)
   - torchinfo (for model summaries)
   - IPython (for interactive use)
   - PyYAML (for reading configuration files)
-  - pickle-mixin (for serialization)
 
 ### **Installation Instructions**
 
