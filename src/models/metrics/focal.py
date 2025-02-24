@@ -23,9 +23,10 @@ def focal_index(outputs: torch.Tensor,
 
     Returns:
         (float): The mean Focal Loss in the batch.
-    """
+    """   
     p_t = outputs * targets + (1 - outputs) * (1 - targets)
-    index = - delta * (1 - p_t) ** gamma * torch.log(p_t + smooth)
+    p_t = torch.clamp(p_t, min=smooth) 
+    index = - delta * (1 - p_t) ** gamma * torch.log(p_t)
     return index.mean()
 
 class FocalLoss(nn.Module):
