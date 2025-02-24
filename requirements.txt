@@ -1,0 +1,12 @@
+torch
+numpy
+scipy
+pandas
+Pillow
+matplotlib
+scikit-learn
+torchinfo
+opencv-python
+IPython
+PyYAML
+pickle-mixin
