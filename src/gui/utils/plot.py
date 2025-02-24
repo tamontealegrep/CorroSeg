@@ -23,38 +23,29 @@ def update_canvas(images, canvases, section_height, section_index):
         section_height (int): The height of each section to display. Determines how much of the image is shown at a time.
         section_index (int): The index of the section to be displayed. Determines the visible portion of the images.
     """
-    # Get the size of the data image (assuming all images are the same size)
     img_width, img_height = images['data'].size 
 
     start_y = section_index * section_height
     end_y = min(start_y + section_height, img_height)
     
-    # Loop through the images and crop them
     sections = {}
     for key, img in images.items():
-        # Crop the image
         sections[key] = img.crop((0, start_y, img_width, end_y))
 
-    # Initialize the scroll region and references to the cropped images
     crop_width, crop_height = sections["data"].size
     
-    # Convert the cropped sections to Tkinter images
     tk_images = {}
     for key, img in sections.items():
-        # Convert to Tkinter image
         tk_images[key] = ImageTk.PhotoImage(img)
 
-    # Clear previous images from the canvases
     for key, canvas in canvases.items():
         canvas.delete("all")
     
-    # Add the new cropped images to the canvases
     for key, canvas in canvases.items():
         if key in tk_images:
             canvas.create_image(0, 0, image=tk_images[key], anchor="nw")
-            canvas.image = tk_images[key]  # Maintain a reference to avoid garbage collection
+            canvas.image = tk_images[key]
 
-    # Update the scroll region of all canvases
     for canvas in canvases.values():
         canvas.config(scrollregion=(0, 0, crop_width, crop_height))
 
@@ -74,20 +65,20 @@ def plot_training(model: Network,
     val_loss = results['val_loss']
     epochs = range(len(results['train_loss']))
     
-    # Usamos la figura actual en lugar de crear una nueva
     fig = canvas.figure
-    ax = fig.axes[0]  # Asumimos que hay solo un gráfico, por lo tanto tomamos el primer eje
+    ax = fig.axes[0]  
     
-    # Limpiamos los ejes para actualizarlos
     ax.clear()
     
-    # Actualizamos los datos del gráfico
     ax.plot(epochs, loss, label='Train Loss')
     ax.plot(epochs, val_loss, label='Val Loss')
     ax.set_title('Training Loss')
     ax.set_xlabel('Epochs')
     ax.set_ylabel('Loss')
     ax.legend()
+
+    ax.yaxis.set_ticks_position('left')
+    ax.yaxis.set_label_position('right') 
 
     canvas.figure = fig
     canvas.draw() 
